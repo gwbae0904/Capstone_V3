@@ -1,0 +1,56 @@
+# ===== Unity 자동 생성 폴더 =====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Aa]ssets/AssetStoreTools*
+
+# ===== Visual Studio / Rider / VS Code 자동 생성 =====
+.vs/
+.idea/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vscode/
+
+# ===== OS 관련 =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# ===== NuGet (OpenCvSharp4 등) =====
+# 용량이 커서 저장소엔 안 올리고, 클론 후 NuGetForUnity로 다시 설치함 (README 참고)
+[Aa]ssets/Packages/
+[Aa]ssets/Packages.meta
+.nuget/
+
+# ===== 빌드 결과물 =====
+*.apk
+*.aab
+*.unitypackage
+*.app
+[Ee]xported[Oo]bj/
+
+# ===== 개인 설정/캘리브레이션 값 (사람마다 다름) =====
+# 카메라 캘리브레이션 값, 특정 COM 포트 번호 등은 Inspector에만 저장되고
+# 씬/프리팹 파일 자체에 값으로 박히므로 별도 gitignore 대상은 없음.
+# (팀원마다 Fx/Fy/Cx/Cy, Port Name 등은 README의 "개인별로 맞춰야 하는 값" 참고)
