@@ -1278,6 +1278,12 @@ MonoBehaviour:
   visualPrefab: {fileID: 1000010304998954, guid: 6def53d002137b747aec0b29551e0e25, type: 3}
   normalMaterial: {fileID: 0}
   highlightMaterial: {fileID: 0}
+  recenterOnWrist: 1
+  targetBoneName: wrist
+  handSuffix: _r
+  additionalOffset: {x: 0, y: 0, z: 0}
+  visualRotationOffsetEuler: {x: 0, y: -45, z: 90}
+  showDebugInfo: 1
 --- !u!4 &222037408 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 485514, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
@@ -1301,9 +1307,9 @@ MonoBehaviour:
   targetTransform: {fileID: 222037408}
   applyRotation: 1
   invertX: 0
-  invertY: 0
-  invertZ: 0
-  axisMapping: 0
+  invertY: 1
+  invertZ: 1
+  axisMapping: 3
   curls:
   - 0
   - 0
@@ -1338,13 +1344,8 @@ MonoBehaviour:
   serialReceiver: {fileID: 222037409}
   handForGrabCheck: {fileID: 222037410}
   handSuffix: _r
-  thumbMaxAngle: 50
-  otherFingerMaxAngle: 50
-  metaRatio: 0
-  j0Ratio: 1
-  j1Ratio: 0.9
-  j2Ratio: 0.7
-  curlAxis: {x: 0, y: 0, z: -1}
+  openHandPoseName: ReferencePose_OpenHand
+  fistPoseName: ReferencePose_Fist
 --- !u!1 &255737074 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000012261516340, guid: e0b086fbb874df143b6ac8f53cea5424, type: 3}
@@ -10092,6 +10093,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1965732369}
   - component: {fileID: 1965732370}
+  - component: {fileID: 1965732371}
   m_Layer: 0
   m_Name: DotTracker
   m_TagString: Untagged
@@ -10143,15 +10145,19 @@ MonoBehaviour:
   - markerId: 0
     faceName: BackOfHand
     markerSizeMeters: 0.02
+    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 1
     faceName: Palm
     markerSizeMeters: 0.02
+    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 2
     faceName: Side
     markerSizeMeters: 0.02
+    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 3
     faceName: MotorMount
     markerSizeMeters: 0.02
+    wristOffsetLocal: {x: 0, y: 0, z: 0}
   targetTransform: {fileID: 222037408}
   applyRotation: 0
   smoothingFactor: 0.3
@@ -10168,6 +10174,18 @@ MonoBehaviour:
   showContinuityAsValid: 1
   continuityAreaRatioMin: 0.5
   continuityAreaRatioMax: 2
+--- !u!114 &1965732371
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1965732368}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0085d19f49642e45987cb0b1e72bdf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ResolutionDebugger
 --- !u!1001 &2001274744
 PrefabInstance:
   m_ObjectHideFlags: 0
