@@ -43,6 +43,10 @@ Desktop.ini
 [Aa]ssets/Packages.meta
 .nuget/
 
+# ===== Unity 크래시 복구 임시 파일 =====
+[Aa]ssets/_[Rr]ecovery/
+[Aa]ssets/_[Rr]ecovery.meta
+
 # ===== 빌드 결과물 =====
 *.apk
 *.aab

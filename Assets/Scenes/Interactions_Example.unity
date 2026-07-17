@@ -1275,15 +1275,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bea6bbdb7b56a0b4dbd50afdaa789cfc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: SteamVR::Valve.VR.InteractionSystem.HandVisual
-  visualPrefab: {fileID: 1000010304998954, guid: 6def53d002137b747aec0b29551e0e25, type: 3}
-  normalMaterial: {fileID: 0}
-  highlightMaterial: {fileID: 0}
-  recenterOnWrist: 1
-  targetBoneName: wrist
-  handSuffix: _r
-  additionalOffset: {x: 0, y: 0, z: 0}
-  visualRotationOffsetEuler: {x: 0, y: -45, z: 90}
-  showDebugInfo: 1
 --- !u!4 &222037408 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 485514, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
@@ -1344,8 +1335,38 @@ MonoBehaviour:
   serialReceiver: {fileID: 222037409}
   handForGrabCheck: {fileID: 222037410}
   handSuffix: _r
-  openHandPoseName: ReferencePose_OpenHand
-  fistPoseName: ReferencePose_Fist
+  thumbMaxAngle: 60
+  otherFingerMaxAngle: 80
+  metaRatio: 0
+  j0Ratio: 1
+  j1Ratio: 0.9
+  j2Ratio: 0.7
+  curlAxis: {x: 1, y: 0, z: 0}
+--- !u!114 &222037412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 222037405}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 978be677d27e0534a9def4d012245b0a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SteamVR::Valve.VR.InteractionSystem.HandVisual
+  visualPrefab: {fileID: 1000010304998954, guid: 6def53d002137b747aec0b29551e0e25, type: 3}
+  normalMaterial: {fileID: 0}
+  highlightMaterial: {fileID: 0}
+  recenterOnWrist: 1
+  targetBoneName: wrist
+  handSuffix: _r
+  additionalOffset: {x: 0, y: 0, z: 0}
+  visualRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  hoverPointToAlign: {fileID: 872770259}
+  attachmentPointToAlign: {fileID: 1518911797}
+  gripBoneName: finger_middle_meta
+  gripPointOffset: {x: 0, y: 0, z: 0}
+  showDebugInfo: 1
 --- !u!1 &255737074 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000012261516340, guid: e0b086fbb874df143b6ac8f53cea5424, type: 3}
@@ -4506,6 +4527,11 @@ Transform:
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
   m_PrefabInstance: {fileID: 2049173636}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &872770259 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 480432, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
+  m_PrefabInstance: {fileID: 1893138394}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &882634587
 PrefabInstance:
@@ -7836,6 +7862,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+--- !u!4 &1518911797 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 490018, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
+  m_PrefabInstance: {fileID: 1893138394}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1541562789 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -9665,6 +9696,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 160596, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
       insertIndex: -1
       addedObject: {fileID: 222037411}
+    - targetCorrespondingSourceObject: {fileID: 160596, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 222037412}
   m_SourcePrefab: {fileID: 100100000, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
 --- !u!1001 &1904980573
 PrefabInstance:
@@ -10145,19 +10179,15 @@ MonoBehaviour:
   - markerId: 0
     faceName: BackOfHand
     markerSizeMeters: 0.02
-    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 1
     faceName: Palm
     markerSizeMeters: 0.02
-    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 2
     faceName: Side
     markerSizeMeters: 0.02
-    wristOffsetLocal: {x: 0, y: 0, z: 0}
   - markerId: 3
     faceName: MotorMount
     markerSizeMeters: 0.02
-    wristOffsetLocal: {x: 0, y: 0, z: 0}
   targetTransform: {fileID: 222037408}
   applyRotation: 0
   smoothingFactor: 0.3

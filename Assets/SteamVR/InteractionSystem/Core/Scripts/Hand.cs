@@ -28,9 +28,14 @@
 //   원인: 이 플래그가 enum엔 정의돼 있었지만 실제로 체크하는 코드가 어디에도 없어서,
 //   물체를 잡아도(부모는 손으로 바뀌어도) SetParent()가 월드 좌표를 그대로 유지하는 바람에
 //   물체가 잡히기 직전 위치에 계속 남아있는(손에 스냅되지 않는) 문제가 있었음.
-//   -> SnapOnAttach 플래그가 켜진 경우, objectAttachmentPoint(또는 attachmentOffset)
-//   위치/회전으로 물체를 실제로 이동시키도록 함. 이 플래그는 각 Throwable 컴포넌트의
-//   Attachment Flags 드롭다운에서 개별적으로 켜야 적용됨 (기본값엔 안 포함되어 있음).
+// - ParentToHand 시 물체를 this.transform(RightHand 자신)에 붙이던 것을
+//   objectAttachmentPoint에 직접 붙이도록 변경. 원인: RightHand 자신에게 붙이고
+//   SnapOnAttach로 "잡는 순간에만" objectAttachmentPoint 위치/회전을 한 번 복사하는
+//   방식이었는데, 그 뒤로는 물체가 RightHand의 회전(IMU 원본 회전)만 따라가고
+//   HandVisual이 objectAttachmentPoint에 얹어주는 추가 보정(Visual Rotation Offset
+//   Euler 등)은 잡는 그 순간 이후로 전혀 반영이 안 되는 문제가 있었음.
+//   -> objectAttachmentPoint에 직접 부모로 붙여서, 그 이후로도 objectAttachmentPoint의
+//   위치/회전 변화(HandVisual이 매 프레임 갱신하는 것 포함)를 물체가 계속 따라가게 함.
 // - GetTrackedObjectVelocity/AngularVelocity를 순간값 대신 최근 N프레임(velocityHistory)
 //   평균으로 변경. 원인: 웹캠/ArUco 트래킹 노이즈가 순간 속도 계산에 그대로 반영돼서,
 //   물체를 놓는 그 한 프레임에 노이즈가 튀면 의도보다 훨씬 세게 던져지는 문제가 있었음.
@@ -314,9 +319,16 @@ namespace Valve.VR.InteractionSystem
                     rb.useGravity = false;
             }
 
+            // ParentToHand: this.transform(RightHand 자신)이 아니라 objectAttachmentPoint에
+            // 직접 부모로 붙임. 이래야 그 이후로도 objectAttachmentPoint의 위치/회전 변화
+            // (HandVisual이 매 프레임 갱신하는 손 모델 보정 포함)를 물체가 계속 따라감.
+            // attachmentOffset이 있는 경우(물체 쪽에 grip 기준점이 지정된 경우)는 그 정렬을
+            // 아래에서 별도로 계산하므로, 부모는 여전히 objectAttachmentPoint로 붙이되
+            // 위치/회전만 attachmentOffset 기준으로 다시 맞춰줌.
             if ((flags & AttachmentFlags.ParentToHand) != 0)
             {
-                objectToAttach.transform.SetParent(this.transform);
+                Transform parentTarget = objectAttachmentPoint != null ? objectAttachmentPoint : this.transform;
+                objectToAttach.transform.SetParent(parentTarget);
             }
 
             // SnapOnAttach: 물체를 손의 grip 지점(objectAttachmentPoint)으로 실제로 이동시킴.
@@ -324,8 +336,6 @@ namespace Valve.VR.InteractionSystem
             // 부모만 손으로 바뀔 뿐 물체는 잡히기 직전 위치에 계속 남아있게 됨.
             if ((flags & AttachmentFlags.SnapOnAttach) != 0)
             {
-                Transform snapReference = attachmentOffset != null ? attachmentOffset : objectAttachmentPoint;
-
                 if (attachmentOffset != null)
                 {
                     // attachmentOffset은 "물체 쪽"에서 grip 기준점 역할을 하는 트랜스폼.
@@ -338,8 +348,10 @@ namespace Valve.VR.InteractionSystem
                 }
                 else
                 {
-                    objectToAttach.transform.position = objectAttachmentPoint.position;
-                    objectToAttach.transform.rotation = objectAttachmentPoint.rotation;
+                    // objectAttachmentPoint에 부모로 이미 붙었으므로, 로컬 좌표를 0/identity로만
+                    // 맞추면 됨 (월드 좌표를 직접 계산할 필요 없음 - 부모-자식 관계가 알아서 따라감)
+                    objectToAttach.transform.localPosition = Vector3.zero;
+                    objectToAttach.transform.localRotation = Quaternion.identity;
                 }
             }
 
