@@ -1292,15 +1292,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa874894840505d419b62adcfd3bfcf3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SerialGloveReceiver
-  portName: COM7
+  portName: COM3
   baudRate: 115200
   targetHand: {fileID: 222037410}
   targetTransform: {fileID: 222037408}
   applyRotation: 1
-  invertX: 0
-  invertY: 1
+  invertX: 1
+  invertY: 0
   invertZ: 1
   axisMapping: 3
+  defaultHapticStopValue: 500
   curls:
   - 0
   - 0
@@ -1341,7 +1342,7 @@ MonoBehaviour:
   j0Ratio: 1
   j1Ratio: 0.9
   j2Ratio: 0.7
-  curlAxis: {x: 1, y: 0, z: 0}
+  curlAxis: {x: 0, y: 0, z: -1}
 --- !u!114 &222037412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1361,11 +1362,9 @@ MonoBehaviour:
   targetBoneName: wrist
   handSuffix: _r
   additionalOffset: {x: 0, y: 0, z: 0}
-  visualRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  visualRotationOffsetEuler: {x: 0, y: -45, z: 90}
   hoverPointToAlign: {fileID: 872770259}
   attachmentPointToAlign: {fileID: 1518911797}
-  gripBoneName: finger_middle_meta
-  gripPointOffset: {x: 0, y: 0, z: 0}
   showDebugInfo: 1
 --- !u!1 &255737074 stripped
 GameObject:
@@ -2531,6 +2530,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &472793498 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -2552,6 +2556,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1001 &476406820
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3732,6 +3741,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &720330320
 GameObject:
   m_ObjectHideFlags: 0
@@ -3870,6 +3884,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &734795145
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3983,6 +4002,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1001 &742171895
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4256,6 +4280,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &803082697
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4624,6 +4653,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &914772139
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4830,6 +4864,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &924338261 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 125964, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
@@ -4886,6 +4925,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &951491880
 GameObject:
   m_ObjectHideFlags: 0
@@ -5267,6 +5311,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &1027333385
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5441,6 +5490,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1044145848 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -5462,6 +5516,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1059511299 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -5483,6 +5542,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1064358105
 GameObject:
   m_ObjectHideFlags: 0
@@ -5802,6 +5866,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1139617278
 GameObject:
   m_ObjectHideFlags: 0
@@ -5898,6 +5967,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!4 &1176824549 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4000010733554458, guid: e0b086fbb874df143b6ac8f53cea5424, type: 3}
@@ -5919,6 +5993,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1183849619
 GameObject:
   m_ObjectHideFlags: 0
@@ -6124,6 +6203,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1211302275 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -6145,6 +6229,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &1211325097
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6339,6 +6428,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1250008075 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -6360,6 +6454,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1261001914 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -6381,6 +6480,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1271963282 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100000, guid: d385554d73e74444094a4927b4201f1f, type: 3}
@@ -6719,6 +6823,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1307715891
 GameObject:
   m_ObjectHideFlags: 0
@@ -7039,6 +7148,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1341018632 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -7060,6 +7174,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1351404439
 GameObject:
   m_ObjectHideFlags: 0
@@ -7348,6 +7467,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &1436515058
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7457,6 +7581,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1443051532
 GameObject:
   m_ObjectHideFlags: 0
@@ -7525,6 +7654,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1477037010
 GameObject:
   m_ObjectHideFlags: 0
@@ -7862,6 +7996,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!4 &1518911797 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 490018, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
@@ -7989,6 +8128,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1573696685
 GameObject:
   m_ObjectHideFlags: 0
@@ -8316,6 +8460,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1603594779 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000012660339372, guid: e0b086fbb874df143b6ac8f53cea5424, type: 3}
@@ -8337,6 +8486,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1619325031 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -8358,6 +8512,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &1655123246
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8587,6 +8746,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1715344611
 GameObject:
   m_ObjectHideFlags: 0
@@ -8818,6 +8982,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1780181936
 GameObject:
   m_ObjectHideFlags: 0
@@ -9022,6 +9191,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &1794918250
 GameObject:
   m_ObjectHideFlags: 0
@@ -9140,6 +9314,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1001 &1820424851
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -9261,6 +9440,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1824195151
 GameObject:
   m_ObjectHideFlags: 0
@@ -9672,6 +9856,14 @@ PrefabInstance:
       propertyPath: isActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11401046, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
+      propertyPath: hoverRadius
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 11401046, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
+      propertyPath: grabThreshold
+      value: 0.7
+      objectReference: {fileID: 0}
     - target: {fileID: 11489144, guid: dc06161b6d97feb419f45f03b62e14b9, type: 3}
       propertyPath: urpControllerMaterial
       value: 
@@ -9813,6 +10005,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1919622084
 GameObject:
   m_ObjectHideFlags: 0
@@ -10004,6 +10201,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &1964847907
 GameObject:
   m_ObjectHideFlags: 0
@@ -10166,8 +10368,9 @@ MonoBehaviour:
   videoClip: {fileID: 32900000, guid: 0c4e7f0fc2289954ca86b6da386107f8, type: 3}
   loopVideo: 1
   dictionaryType: 20
-  requestedWidth: 1920
-  requestedHeight: 1080
+  useIVCam: 1
+  requestedWidth: 1280
+  requestedHeight: 960
   requestedFPS: 60
   fx: 1000
   fy: 1000
@@ -10345,6 +10548,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &2003890213
 GameObject:
   m_ObjectHideFlags: 0
@@ -10469,6 +10677,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &2049173636
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10586,6 +10799,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1001 &2050838874
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10695,6 +10913,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &2061401037 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000012660339372, guid: e0b086fbb874df143b6ac8f53cea5424, type: 3}
@@ -10716,6 +10939,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1 &2115780392
 GameObject:
   m_ObjectHideFlags: 0
@@ -10877,6 +11105,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 100
+  indexStopValue: 600
+  middleStopValue: 1000
+  ringStopValue: 600
+  pinkyStopValue: 1000
 --- !u!1 &2123896209 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1000010777624494, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -10898,6 +11131,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!4 &2136463967 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4000011633437892, guid: fb710a001890d9a44bb74a8ce4f20cc0, type: 3}
@@ -10919,6 +11157,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1001 &2138255698
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11024,6 +11267,11 @@ MonoBehaviour:
   releasePoseStateName: Rest
   animatorLayer: 0
   transitionDuration: 0.1
+  thumbStopValue: 500
+  indexStopValue: 500
+  middleStopValue: 500
+  ringStopValue: 500
+  pinkyStopValue: 500
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -11032,5 +11280,5 @@ SceneRoots:
   - {fileID: 1856428177}
   - {fileID: 2115780393}
   - {fileID: 645425321}
-  - {fileID: 1965732369}
   - {fileID: 1307715895}
+  - {fileID: 1965732369}

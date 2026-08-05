@@ -26,6 +26,15 @@
 //   -> GetComponentInParent<Interactable>()로 직접 찾도록 바꾸고, 못 찾으면
 //   자동 생성하지 않고 명확한 에러를 남기도록 변경. 이러면 이 스크립트를
 //   자식/부모 어디에 붙여도 안전하고, 실수로 중복 생성되는 일도 없음.
+// - Haptic Stop Value 필드 추가. 원인: 이 프로젝트의 실제 하드웨어(Lucas
+//   glove 방식)는 모터가 회전축과 수직으로 붙어있어서, 미리 원하는 각도로
+//   돌려두면 손가락 회전축의 나사가 모터 축에 닿는 순간 물리적으로 더 이상
+//   못 굽혀지는 방식으로 저항을 만듦. 즉 서보에 보내는 값이 "얼마나 세게
+//   쥐는지"가 아니라 "이 물체를 잡을 때 손가락이 어디까지 굽혀지도록
+//   허용할지(=물체 크기)"를 뜻함. 물체마다 크기가 다르므로 이 값도 물체별로
+//   다르게 설정 가능하도록 여기(GraspPoseTrigger)에 필드로 둠.
+//   (실제 전송은 SerialGloveReceiver.cs에서, hover/grab 중인 물체의 이 값을
+//   읽어와서 처리함)
 
 using UnityEngine;
 using Valve.VR.InteractionSystem;
@@ -43,6 +52,21 @@ public class GraspPoseTrigger : MonoBehaviour
 
     [Tooltip("상태 전환에 걸리는 시간(초). 0이면 즉시 전환")]
     public float transitionDuration = 0.1f;
+
+    [Header("햅틱 (손가락별 모터 정지 각도)")]
+    [Tooltip("이 물체를 잡을 때(또는 hover만 할 때 미리) 각 손가락이 여기까지만 굽혀지도록 하는 값(0~1000). " +
+             "물체를 실제로 손으로 쥐어보면서 손가락별로 값을 조정하세요. 값이 클수록 더 많이 굽혀짐(서보 각도 0도에 가까워짐), 작을수록 일찍 멈춤(180도에 가까워짐)")]
+    [Range(0, 1000)] public int thumbStopValue = 100;
+    [Range(0, 1000)] public int indexStopValue = 600;
+    [Range(0, 1000)] public int middleStopValue = 1000;
+    [Range(0, 1000)] public int ringStopValue = 600;
+    [Range(0, 1000)] public int pinkyStopValue = 1000;
+
+    // SerialGloveReceiver가 순서대로 꺼내 쓰기 편하도록 배열로도 제공 (엄지,검지,중지,약지,소지 순서)
+    public int[] GetHapticStopValues()
+    {
+        return new int[] { thumbStopValue, indexStopValue, middleStopValue, ringStopValue, pinkyStopValue };
+    }
 
     private Interactable interactable;
 

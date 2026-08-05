@@ -39,6 +39,13 @@
 // - GetTrackedObjectVelocity/AngularVelocity를 순간값 대신 최근 N프레임(velocityHistory)
 //   평균으로 변경. 원인: 웹캠/ArUco 트래킹 노이즈가 순간 속도 계산에 그대로 반영돼서,
 //   물체를 놓는 그 한 프레임에 노이즈가 튀면 의도보다 훨씬 세게 던져지는 문제가 있었음.
+// - UpdateHovering()이 반경 안의 모든 Interactable을 동시에 hover 상태로 넣던 것을,
+//   가장 가까운 것 "딱 하나만" hover 상태가 되도록 변경. 원인: 물체 2개가 서로 가깝게/
+//   겹쳐서 배치된 경우, 둘 다 동시에 hoveringInteractables에 들어가서, grab이 시작되는
+//   한 프레임에 Hand.Update()의 반복문이 둘 다에게 HandHoverUpdate를 보내고 둘 다
+//   AttachObject를 시도하는 경합이 생겼음. DetachOthers로 나중 것이 먼저 것을 자동
+//   해제하긴 하지만, 그 처리 순서/타이밍에 따라 물체 하나가 제대로 안 놓아지는
+//   문제가 있었음. -> 애초에 하나만 hover 대상이 되게 해서 이 경합 자체를 없앰.
 //
 //=============================================================================
 
@@ -68,6 +75,7 @@ namespace Valve.VR.InteractionSystem
         };
 
         public const AttachmentFlags defaultAttachmentFlags = AttachmentFlags.ParentToHand |
+                                                              AttachmentFlags.SnapOnAttach |
                                                               AttachmentFlags.DetachOthers |
                                                               AttachmentFlags.DetachFromOtherHand |
                                                               AttachmentFlags.TurnOnKinematic;
@@ -219,13 +227,27 @@ namespace Valve.VR.InteractionSystem
 
             Collider[] hits = Physics.OverlapSphere(hoverSphereTransform.position, hoverRadius, hoverLayerMask, QueryTriggerInteraction.Collide);
 
-            List<Interactable> currentlyDetected = new List<Interactable>();
+            // 반경 안에 물체가 여러 개 겹쳐 있어도, 가장 가까운 것 "딱 하나만" hover 대상으로 삼음.
+            // (여러 개를 동시에 hover 상태로 두면, grab 시작하는 프레임에 여러 물체가 동시에
+            // AttachObject를 시도하는 경합이 생겨서 그 중 하나가 제대로 안 놓아지는 문제가 있었음)
+            Interactable closest = null;
+            float closestDist = float.MaxValue;
             foreach (var col in hits)
             {
                 Interactable interactable = col.GetComponentInParent<Interactable>();
-                if (interactable != null && !currentlyDetected.Contains(interactable))
-                    currentlyDetected.Add(interactable);
+                if (interactable == null) continue;
+
+                float dist = Vector3.Distance(hoverSphereTransform.position, col.transform.position);
+                if (dist < closestDist)
+                {
+                    closestDist = dist;
+                    closest = interactable;
+                }
             }
+
+            List<Interactable> currentlyDetected = new List<Interactable>();
+            if (closest != null)
+                currentlyDetected.Add(closest);
 
             // 새로 hover 시작한 것들
             foreach (var interactable in currentlyDetected)
@@ -322,9 +344,6 @@ namespace Valve.VR.InteractionSystem
             // ParentToHand: this.transform(RightHand 자신)이 아니라 objectAttachmentPoint에
             // 직접 부모로 붙임. 이래야 그 이후로도 objectAttachmentPoint의 위치/회전 변화
             // (HandVisual이 매 프레임 갱신하는 손 모델 보정 포함)를 물체가 계속 따라감.
-            // attachmentOffset이 있는 경우(물체 쪽에 grip 기준점이 지정된 경우)는 그 정렬을
-            // 아래에서 별도로 계산하므로, 부모는 여전히 objectAttachmentPoint로 붙이되
-            // 위치/회전만 attachmentOffset 기준으로 다시 맞춰줌.
             if ((flags & AttachmentFlags.ParentToHand) != 0)
             {
                 Transform parentTarget = objectAttachmentPoint != null ? objectAttachmentPoint : this.transform;
