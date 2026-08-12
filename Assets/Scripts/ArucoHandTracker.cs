@@ -87,7 +87,7 @@ public class ArucoHandTracker : MonoBehaviour
 
     [Header("웹캠 설정")]
     [Tooltip("체크를 끄면 iVCam을 무시하고 노트북 내장 기본 웹캠을 강제로 켭니다.")]
-    public bool useIVCam = true; // ★ 사용자 편의를 위해 추가된 스위치!
+    public bool useIVCam = true;
 
     public int requestedWidth = 1280;
     public int requestedHeight = 960;
@@ -101,6 +101,12 @@ public class ArucoHandTracker : MonoBehaviour
     public double cy = 480;
     public float distanceScaleCorrection = 1.0f;
     private bool camMatrixConfigured = false;
+
+    [Header("깊이(거리) 반전")]
+    [Tooltip("켜면 손이 카메라에 가까워질수록 가상 손이 화면에서 멀어지고, 손이 카메라에서 멀어질수록 가상 손이 가까워지는 반대 방향으로 동작합니다.")]
+    public bool invertDepth = false;
+    [Tooltip("반전의 기준이 되는 실측 거리(미터). 이 거리에 있을 때는 반전 여부와 상관없이 위치가 그대로 유지되고, 이보다 가까워지거나 멀어지면 반대 방향으로 움직입니다.")]
+    public float depthReferenceMeters = 0.35f;
 
     [Header("마커 목록")]
     public List<ArucoMarkerConfig> markers = new List<ArucoMarkerConfig>();
@@ -174,14 +180,25 @@ public class ArucoHandTracker : MonoBehaviour
     private int lastImageWidth, lastImageHeight;
     private Texture2D dotTexture;
 
+    // 깊이(Z)를 기준 거리 중심으로 반전시킴. invertDepth가 꺼져있으면 원본 그대로 반환.
+    // rawZ가 기준거리보다 작으면(카메라에 더 가까우면) 결과는 기준거리보다 커지고(더 멀어짐),
+    // rawZ가 기준거리보다 크면(카메라에서 더 멀면) 결과는 기준거리보다 작아짐(더 가까워짐).
+    private float ApplyDepthInversion(float rawZ)
+    {
+        if (!invertDepth) return rawZ;
+        return 2f * depthReferenceMeters - rawZ;
+    }
+
     void Start()
     {
         if (inputSource == InputSource.Webcam)
         {
+            requestedWidth = 1280;
+            requestedHeight = 960;
+            requestedFPS = 60;
 
             string finalCamName = "";
 
-            // 1. 체크박스(useIVCam)가 켜져 있으면 iVCam 먼저 찾기
             if (useIVCam)
             {
                 foreach (var device in WebCamTexture.devices)
@@ -195,10 +212,8 @@ public class ArucoHandTracker : MonoBehaviour
                 }
             }
 
-            // 2. 체크박스가 꺼져있거나, iVCam을 못 찾았을 경우 기본 카메라 찾기
             if (string.IsNullOrEmpty(finalCamName) && WebCamTexture.devices.Length > 0)
             {
-                // iVCam이 아닌 첫 번째 카메라(노트북 내장 캠) 찾기
                 foreach (var device in WebCamTexture.devices)
                 {
                     if (!device.name.ToLower().Contains("ivcam"))
@@ -208,7 +223,6 @@ public class ArucoHandTracker : MonoBehaviour
                     }
                 }
 
-                // 그래도 없으면 어쩔 수 없이 0번 기기 강제 할당
                 if (string.IsNullOrEmpty(finalCamName))
                 {
                     finalCamName = WebCamTexture.devices[0].name;
@@ -431,7 +445,8 @@ public class ArucoHandTracker : MonoBehaviour
                         double tx = tvec.At<double>(0);
                         double ty = tvec.At<double>(1);
                         double tz = tvec.At<double>(2);
-                        Vector3 rawPosition = new Vector3(-(float)tx, -(float)ty, (float)tz) * distanceScaleCorrection;
+                        float depthZ = ApplyDepthInversion((float)tz);
+                        Vector3 rawPosition = new Vector3(-(float)tx, -(float)ty, depthZ) * distanceScaleCorrection;
 
                         kalmanX.UpdateMeasurement(rawPosition.x);
                         kalmanY.UpdateMeasurement(rawPosition.y);
@@ -467,7 +482,8 @@ public class ArucoHandTracker : MonoBehaviour
         double ty = tvec.At<double>(1);
         double tz = tvec.At<double>(2);
 
-        Vector3 rawPosition = new Vector3(-(float)tx, -(float)ty, (float)tz) * distanceScaleCorrection;
+        float depthZ = ApplyDepthInversion((float)tz);
+        Vector3 rawPosition = new Vector3(-(float)tx, -(float)ty, depthZ) * distanceScaleCorrection;
 
         Mat rotMat = new Mat();
         Cv2.Rodrigues(rvec, rotMat);

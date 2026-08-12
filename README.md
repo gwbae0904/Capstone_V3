@@ -100,10 +100,10 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 
 | 파일 | 역할 |
 |---|---|
-| `ArucoHandTracker.cs` | 웹캠/영상파일 입력 → ArUco/AprilTag 인식 → **위치만** 계산 → 칼만 필터 → RightHand에 적용. `Use IVCam`으로 웹캠 소스 자동 탐색 |
+| `ArucoHandTracker.cs` | 웹캠/영상파일 입력 → ArUco/AprilTag 인식 → **위치만** 계산 → 칼만 필터 → RightHand에 적용. `Use IVCam`으로 웹캠 소스 자동 탐색. `Invert Depth`로 카메라와의 거리-화면상 깊이 관계를 반전 가능(아래 참고) |
 | `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), **회전** 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지값을 아두이노로 전송 (아래 햅틱 섹션 참고) |
 | `FingerCurlAnimator.cs` | curl 값으로 장갑 모델의 손가락 뼈를 실제로 굽힘. 관절별(meta/j0/j1/j2) 비율과 `Curl Axis`로 굽힘 방향/깊이 조정. 물체를 잡는 동안은 자동으로 손을 떼고 grasp pose 애니메이터에게 자세를 맡김 |
-| `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지값(아래 참고)도 여기서 물체별로 설정 |
+| `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지 각도(아래 참고), 물체별 커스텀 Grab Threshold도 여기서 설정. **`Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한 내용으로 있어야 함** (아래 "알려진 이슈" 참고) |
 | `KeyboardHandDriver.cs` | 하드웨어 없이 WASD+Space로 테스트할 때 사용 |
 | `FallbackCameraController.cs` | 헤드셋 없이 WASD+마우스 우클릭으로 시점 조작 (개발용) |
 
@@ -111,7 +111,7 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 
 | 파일 | 수정 내용 |
 |---|---|
-| `Hand.cs` | grab 판정을 FixedUpdate→Update로 이동(저프레임 대응). `SnapOnAttach` 실제 처리 로직 추가, `objectAttachmentPoint`에 직접 부모로 붙여서 잡은 뒤에도 손 모양 보정을 계속 따라가게 함. `GetTrackedObjectVelocity/AngularVelocity` 스무딩. **hover 대상을 가장 가까운 것 하나로 제한**(물체 여러 개가 겹쳐있을 때 하나가 안 놓아지던 문제 해결) |
+| `Hand.cs` | grab 판정을 FixedUpdate→Update로 이동(저프레임 대응). `SnapOnAttach` 실제 처리 로직 추가, `objectAttachmentPoint`에 직접 부모로 붙여서 잡은 뒤에도 손 모양 보정을 계속 따라가게 함. `GetTrackedObjectVelocity/AngularVelocity` 스무딩. **hover 대상을 가장 가까운 것 하나로 제한**(물체 여러 개가 겹쳐있을 때 하나가 안 놓아지던 문제 해결). **물체별 커스텀 Grab Threshold 지원** — 지금 hover/grab 중인 물체의 `GraspPoseTrigger`에서 `Use Custom Grab Threshold`가 켜져 있으면 그 값을, 아니면 `Hand`의 기본 `Grab Threshold`를 사용 (이 때문에 `GraspPoseTrigger` 타입을 참조하게 됨) |
 | `HandVisual.cs` | 장갑 3D 모델을 인스턴스화하고, 지정한 뼈(`Target Bone Name`)가 항상 RightHand 원점에 오도록 매 프레임 재정렬. `HoverPoint`/`ObjectAttachmentPoint`도 모델과의 상대 위치+회전 관계를 캡처해서 매 프레임 재현. `Visual Rotation Offset Euler`로 모델 기본 각도 보정 |
 
 ---
@@ -120,7 +120,7 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 
 이 프로젝트의 서보모터는 **회전축과 수직으로 배치**되어 있어서, 다음과 같은 방식으로 저항을 만듭니다:
 
-1. 모터를 미리 원하는 각도로 돌려둠 (0~1000 값 → 서보 0~180도로 변환)
+1. 모터를 미리 원하는 각도로 돌려둠 (Unity에서 0~180도로 직접 입력 → 내부적으로 아두이노가 기대하는 0~1000 값으로 변환해서 전송, 아두이노 펌웨어 자체는 안 건드림)
 2. 사용자가 실제로 손가락을 굽히면, 손가락 회전축에 달린 나사가 모터 축에 닿는 지점에서 **물리적으로 더 이상 굽혀지지 않게 막힘**
 3. 즉 보내는 값은 "얼마나 세게 쥐는지"가 아니라 **"이 물체를 잡을 때 손가락이 어디까지 굽혀지도록 허용할지(=물체 크기)"**를 의미함
 
@@ -134,16 +134,44 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 | hover 풀리거나 물체를 놓음 | 다시 0으로 원복 |
 | Unity 시작 시(포트 연결 성공 순간) | 이전 세션 값이 남아있을 수 있어 한 번 더 0으로 리셋 |
 
-### 손가락별 정지값 (`GraspPoseTrigger`)
+### 손가락별 정지 각도 (`GraspPoseTrigger`)
 
-물체마다 `Thumb/Index/Middle/Ring/Pinky Stop Value`(0~1000)를 따로 설정합니다. 코드 기본값은
-`Thumb=100, Index=600, Middle=1000, Ring=600, Pinky=1000`으로 맞춰뒀지만, **이건 새로 물체에
-컴포넌트를 붙일 때의 시작값일 뿐**이며, 실제 씬에 이미 있는 Sphere/Cube의 값은 씬 파일에
-저장된 값을 그대로 씁니다 (코드 기본값 변경이 기존 오브젝트에 소급 적용되지 않음 — 이미
-있는 오브젝트 값을 일괄로 바꾸려면 Hierarchy에서 다중 선택 후 Inspector에서 한 번에 수정).
+물체마다 `Thumb/Index/Middle/Ring/Pinky Stop Angle`(0~180도, 실제 서보 각도 기준)을 따로
+설정합니다. 각도가 작을수록 더 많이 굽혀짐(0도=완전히 굽힘), 클수록 일찍 멈춤(180도=편 상태).
+시리얼로 나가는 값은 여전히 0~1000이며(아두이노 펌웨어는 그대로), `GraspPoseTrigger`가
+`angle = 180 - value/1000×180` 공식의 역산으로 내부 변환합니다.
+
+코드 기본값은 `Thumb=162°, Index=72°, Middle=0°, Ring=72°, Pinky=0°`로 맞춰뒀지만(기존
+0~1000 튜닝값 100/600/1000/600/1000과 물리적으로 동일), **이건 새로 물체에 컴포넌트를 붙일
+때의 시작값일 뿐**이며, 실제 씬에 이미 있는 Sphere/Cube의 값은 씬 파일에 저장된 값을 그대로
+씁니다 (코드 기본값 변경이 기존 오브젝트에 소급 적용되지 않음 — 이미 있는 오브젝트 값을
+일괄로 바꾸려면 Hierarchy에서 다중 선택 후 Inspector에서 한 번에 수정).
 
 이 값들은 **실제로 손으로 만져보면서 튜닝하는 값**이라, 정답이 없습니다. 새 물체를 추가하면
 직접 잡아보면서 손가락별로 조정하세요.
+
+### 물체별 Grab Threshold (`GraspPoseTrigger`)
+
+물체마다 `Use Custom Grab Threshold`를 켜면, 그 물체를 잡을 때는 `Hand`의 기본
+`Grab Threshold`(기본 0.7) 대신 그 물체의 `Custom Grab Threshold`(0~1) 값을 사용합니다.
+얇거나 잡기 까다로운 물체는 더 많이 굽혀야 "잡았다"고 인식되도록 개별 조정할 때 사용.
+꺼두면(기본값) 항상 `Hand`의 기본값을 따릅니다.
+
+---
+
+## 깊이(거리) 반전 옵션
+
+`ArucoHandTracker`의 `Invert Depth`를 켜면, 카메라와 손 사이의 실제 거리와 가상 손이
+화면에서 느껴지는 깊이의 관계를 반대로 만들 수 있습니다.
+
+- **꺼짐(기본)**: 손이 카메라에 가까워지면 가상 손도 화면 앞쪽으로, 멀어지면 가상 손도 화면
+  안쪽으로 — 실제 거리와 동일한 방향
+- **켜짐**: 기준 거리(`Depth Reference Meters`)를 중심으로 반대로 동작 — 손이 카메라에
+  가까워지면 가상 손은 오히려 화면 안쪽으로 멀어지고, 손이 카메라에서 멀어지면 가상 손은
+  화면 앞쪽으로 가까워짐
+
+계산식: `결과 거리 = 2 × 기준거리 - 실제거리` (기준거리 지점에서는 반전 여부와 무관하게
+위치가 그대로 유지되는, 기준점을 중심으로 한 거울 반사 방식)
 
 ---
 
@@ -151,6 +179,7 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 
 - `SerialGloveReceiver` → `Port Name` : 본인 PC의 COM 포트 번호로
 - `ArucoHandTracker` → `Fx`/`Fy`/`Distance Scale Correction` : 웹캠마다 다름, 실측 거리로 보정
+- `ArucoHandTracker` → `Invert Depth`/`Depth Reference Meters` : 거리-깊이 반전 사용 여부와, 반전 기준이 되는 실측 거리(기본 0.35m)
 - `SerialGloveReceiver` → `Axis Mapping`/`Invert X,Y,Z` : MPU6050 부착 방향에 따라 다름 (현재 값: `Axis Mapping = YZX`, `Invert X`, `Invert Z` 켜짐)
 - `FingerCurlAnimator` → `Curl Axis` : 장갑 모델 방향에 따라 조정 필요 (현재 값: `(0, 0, -1)`), `Thumb/Other Finger Max Angle`로 굽힘 깊이 조정
 - `HandVisual` → `Target Bone Name`/`Additional Offset` : 마커를 실제로 붙인 위치에 맞춰서
@@ -192,6 +221,14 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
   `SolvePnPMethod.IPPE_SQUARE` 등 확실하지 않으면 IDE 자동완성으로 확인하는 게 제일 빠름
 - **`SerialPort.ReadExisting()`이 Unity(Mono)에서 가끔 에러를 던지는 알려진 버그** — `BytesToRead` +
   `Read(buffer, offset, count)`로 직접 고정 바이트 버퍼를 읽는 방식으로 대체함
+- **`Assets/SteamVR/...`는 `Assets/Scripts/`와 별도의 컴파일 단위(어셈블리)로 나뉘어 있음** —
+  `Assets/Scripts/`에 있는 클래스를 `Assets/SteamVR/...` 쪽 스크립트에서 참조하면
+  `CS0246: The type or namespace name 'XXX' could not be found` 에러가 남. 지금은
+  `Hand.cs`가 `GraspPoseTrigger`를 참조하고 있어서, **`GraspPoseTrigger.cs`를
+  `Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한
+  내용으로 넣어야 함** (같은 이름의 클래스가 서로 다른 어셈블리에 있는 건 문제없음).
+  `Assets/SteamVR/...` 쪽 스크립트에서 `Assets/Scripts/`의 다른 클래스를 새로 참조하게
+  되면 이 문제가 또 발생할 수 있음 — 그때마다 해당 파일을 양쪽에 복사해둘 것
 - **Console에 "The referenced script (Unknown) on this Behaviour is missing!" 경고가 뜨는 경우**:
   예전에 붙였다가 지운 스크립트의 빈 컴포넌트 잔재. 기능엔 영향 없음, Inspector에서
   `Missing (Mono Script)` 컴포넌트를 찾아 Remove Component 하면 됨

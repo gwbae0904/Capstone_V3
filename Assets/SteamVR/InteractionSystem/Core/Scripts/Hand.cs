@@ -103,6 +103,7 @@ namespace Valve.VR.InteractionSystem
         [Tooltip("0=편 손, 1=완전히 굽힘. 아두이노에서 온 curl 값을 여기에 매 프레임 대입하세요.")]
         public float grabCurl = 0f;
         [Range(0f, 1f)]
+        [Tooltip("기본 grab 판정 기준값. 물체의 GraspPoseTrigger에서 Use Custom Grab Threshold가 켜져 있으면 그 물체의 값이 우선 적용되고, 꺼져 있으면 이 기본값을 사용합니다.")]
         public float grabThreshold = 0.7f;
 
         public Hand otherHand;
@@ -168,15 +169,32 @@ namespace Valve.VR.InteractionSystem
         {
             if (!isActive) return; // 트래킹이 유효하지 않으면(예: ArUco 마커가 가려짐) 상태 갱신을 멈춤
 
+            // hover 판정을 먼저 해서, "지금 관련된 물체가 뭔지"를 안 다음에
+            // grab 판정을 해야 물체별 커스텀 threshold를 적용할 수 있음
+            UpdateHovering();
+
+            // 지금 관련된 물체(이미 잡고 있으면 그 물체, 아니면 hover 중인 물체)에
+            // GraspPoseTrigger가 있고 커스텀 threshold가 설정되어 있으면 그 값을 사용,
+            // 없으면 이 Hand의 기본 grabThreshold를 사용
+            float effectiveThreshold = grabThreshold;
+            Interactable relevant = currentAttachedObjectInfo.HasValue
+                ? currentAttachedObjectInfo.Value.interactable
+                : hoveringInteractable;
+            if (relevant != null)
+            {
+                GraspPoseTrigger trigger = relevant.GetComponentInChildren<GraspPoseTrigger>();
+                if (trigger == null) trigger = relevant.GetComponentInParent<GraspPoseTrigger>();
+                if (trigger != null && trigger.useCustomGrabThreshold)
+                    effectiveThreshold = trigger.customGrabThreshold;
+            }
+
             // grab 상태 전이(rising/falling edge) 감지 - 반드시 Update()에서, 소비하는 코드와
             // 같은 호출 안에서 계산해야 함. FixedUpdate에서 계산하면 한 렌더 프레임 안에
             // FixedUpdate가 여러 번 도는 경우 edge flag가 소비되기 전에 덮어써질 수 있음.
-            bool grabbedNow = grabCurl >= grabThreshold;
+            bool grabbedNow = grabCurl >= effectiveThreshold;
             grabStartedThisFrame = grabbedNow && !grabbedLastFrame;
             grabEndedThisFrame = !grabbedNow && grabbedLastFrame;
             grabbedLastFrame = grabbedNow;
-
-            UpdateHovering();
 
             // hover 중인 오브젝트들에게 매 프레임 업데이트 이벤트 전달
             // (Throwable.HandHoverUpdate가 이 안에서 GetGrabStarting()을 폴링해 AttachObject를 직접 호출함)
