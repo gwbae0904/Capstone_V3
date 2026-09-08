@@ -10460,17 +10460,29 @@ MonoBehaviour:
   depthReferenceMeters: 0.35
   markers:
   - markerId: 0
-    faceName: BackOfHand
-    markerSizeMeters: 0.02
-  - markerId: 1
     faceName: Palm
-    markerSizeMeters: 0.02
+    markerSizeMeters: 0.03
+    positionOffset: {x: 0, y: 0, z: 0}
+  - markerId: 1
+    faceName: MotorMount
+    markerSizeMeters: 0.03
+    positionOffset: {x: 0, y: 0, z: 0}
   - markerId: 2
     faceName: Side
-    markerSizeMeters: 0.02
+    markerSizeMeters: 0.03
+    positionOffset: {x: 0, y: 0, z: 0}
   - markerId: 3
-    faceName: MotorMount
+    faceName: BackOfHand1
     markerSizeMeters: 0.02
+    positionOffset: {x: 0.05, y: 0, z: 0}
+  - markerId: 4
+    faceName: BackOfHand2
+    markerSizeMeters: 0.02
+    positionOffset: {x: 0, y: 0, z: 0}
+  - markerId: 5
+    faceName: BackOfHand3
+    markerSizeMeters: 0.02
+    positionOffset: {x: -0.05, y: 0, z: 0}
   targetTransform: {fileID: 222037408}
   applyRotation: 0
   smoothingFactor: 0.3
@@ -10482,6 +10494,13 @@ MonoBehaviour:
   kalmanProcessNoise: 5
   kalmanMeasurementNoise: 0.5
   maxPredictOnlySeconds: 1
+  markerSwitchThresholdRatio: 1.3
+  invertOffsetRotationDirection: 0
+  invertMarkerRotX: 1
+  invertMarkerRotY: 0
+  invertMarkerRotZ: 0
+  debugLastMarkerRotationEuler: {x: 0, y: 0, z: 0}
+  debugLastAppliedOffset: {x: 0, y: 0, z: 0}
   minMarkerPerimeterRate: 0.02
   continuityMaxPixelDistance: 100
   showContinuityAsValid: 1

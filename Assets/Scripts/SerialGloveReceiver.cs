@@ -28,15 +28,9 @@ public class SerialGloveReceiver : MonoBehaviour
     public enum AxisMapping { XYZ, XZY, YXZ, YZX, ZXY, ZYX }
 
     [Header("햅틱 (손가락별 모터 정지 각도)")]
-    [Tooltip("hover/grab 중인 물체에서 GraspPoseTrigger를 못 찾았을 때 쓸 기본 정지 각도 (0~180도, 5손가락 모두 동일하게 적용됨)")]
+    [Tooltip("hover/grab 중인 물체에서 GraspPoseTrigger를 못 찾았을 때 쓸 기본 정지 각도 (0~180도, 5손가락 모두 동일하게 적용됨). 아두이노에 그대로(변환 없이) 전송됩니다.")]
     [Range(0, 180)]
     public int defaultHapticStopAngle = 90;
-
-    // 아두이노는 0~1000 값을 받으므로, 위 각도를 GraspPoseTrigger와 동일한 공식으로 변환
-    private int DefaultAngleToWireValue()
-    {
-        return Mathf.RoundToInt((180 - defaultHapticStopAngle) / 180f * 1000f);
-    }
 
     [Header("디버그 (읽기 전용)")]
     public float[] curls = new float[5];
@@ -151,7 +145,7 @@ public class SerialGloveReceiver : MonoBehaviour
             }
             else
             {
-                int v = DefaultAngleToWireValue();
+                int v = defaultHapticStopAngle;
                 hapticValues = new int[] { v, v, v, v, v };
             }
 

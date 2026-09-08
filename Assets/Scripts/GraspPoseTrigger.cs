@@ -81,26 +81,13 @@ public class GraspPoseTrigger : MonoBehaviour
     [Range(0f, 1f)]
     public float customGrabThreshold = 0.7f;
 
-    // 아두이노는 0~1000 값을 받아 angle = 180 - value/1000*180 으로 서보를 돌림.
-    // 여기서는 위 각도(0~180)를 그 역산 공식으로 0~1000 값으로 바꿔서 넘겨줌
-    // (시리얼 프로토콜/아두이노 펌웨어는 그대로 두고, Unity 쪽 입력 단위만 바꾼 것)
-    private int AngleToWireValue(int angleDeg)
-    {
-        return Mathf.RoundToInt((180 - angleDeg) / 180f * 1000f);
-    }
-
     // SerialGloveReceiver가 순서대로 꺼내 쓰기 편하도록 배열로 제공 (엄지,검지,중지,약지,소지 순서).
-    // 반환값은 기존과 동일하게 0~1000 wire 프로토콜 값 (내부적으로 각도에서 변환됨)
+    // [프로토콜 변경] 예전엔 0~1000 값으로 변환해서 보냈었는데, 아두이노 펌웨어가
+    // "H,각도1,...,각도5" 형식으로 0~180도를 직접 받는 방식으로 바뀌어서, 변환 없이
+    // 각도값 그대로 반환함 (아두이노 쪽 프로토콜이 다시 바뀌면 여기도 같이 맞춰야 함).
     public int[] GetHapticStopValues()
     {
-        return new int[]
-        {
-            AngleToWireValue(thumbStopAngle),
-            AngleToWireValue(indexStopAngle),
-            AngleToWireValue(middleStopAngle),
-            AngleToWireValue(ringStopAngle),
-            AngleToWireValue(pinkyStopAngle),
-        };
+        return new int[] { thumbStopAngle, indexStopAngle, middleStopAngle, ringStopAngle, pinkyStopAngle };
     }
 
     private Interactable interactable;

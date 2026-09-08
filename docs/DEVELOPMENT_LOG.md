@@ -20,10 +20,10 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
 
 | 파일 | 역할 |
 |---|---|
-| `ArucoHandTracker.cs` | 웹캠/영상파일 입력 → ArUco/AprilTag 인식 → 위치 계산 → 칼만 필터 → RightHand에 적용. `Use IVCam`으로 웹캠 소스 자동 탐색. `Invert Depth`로 거리-깊이 관계 반전 가능. 마커별 회전/위치 보정값으로 IMU 드리프트 보정용 절대 방향과 손목 기준 위치를 계산해 공개 |
-| `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), 회전 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지 각도를 아두이노로 전송. `ArucoHandTracker`가 공개하는 마커 기반 절대 방향으로 IMU 드리프트를 매 프레임 부드럽게 보정 |
+| `ArucoHandTracker.cs` | 웹캠/영상파일 입력 → ArUco/AprilTag 인식 → 위치 계산 → 칼만 필터 → RightHand에 적용. `Use IVCam`으로 웹캠 소스 자동 탐색. `Invert Depth`로 거리-깊이 관계 반전 가능. 한 앵글에 마커가 여러 개(손등 3개) 동시에 잡힐 때 `Marker Switch Threshold Ratio`로 잦은 전환을 억제하고, 마커별 `Position Offset`을 현재 회전만큼 돌려서 더해 전환 시 위치 튐을 줄임 |
+| `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), 회전 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지 각도(0~180도, 변환 없이 그대로)를 아두이노로 전송 |
 | `FingerCurlAnimator.cs` | curl 값으로 장갑 모델의 손가락 뼈를 실제로 굽힘. 관절별(meta/j0/j1/j2) 비율과 `Curl Axis`로 굽힘 방향/깊이 조정. 물체를 잡는 동안은 자동으로 손을 떼고 grasp pose 애니메이터에게 자세를 맡김 |
-| `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지 각도(0~180도), 물체별 커스텀 Grab Threshold도 여기서 설정. **`Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한 내용으로 있어야 함** (아래 어셈블리 분리 이슈 참고) |
+| `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지 각도(0~180도, 아두이노에 변환 없이 직접 전송), 물체별 커스텀 Grab Threshold도 여기서 설정. **`Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한 내용으로 있어야 함** (아래 어셈블리 분리 이슈 참고) |
 | `KeyboardHandDriver.cs` | 하드웨어 없이 WASD+Space로 테스트할 때 사용 |
 | `FallbackCameraController.cs` | 헤드셋 없이 WASD+마우스 우클릭으로 시점 조작 (개발용) |
 
@@ -39,17 +39,35 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
 - `SerialGloveReceiver` → `Port Name`: 본인 PC의 COM 포트 번호로
 - `ArucoHandTracker` → `Fx`/`Fy`/`Distance Scale Correction`: 웹캠마다 다름, 실측 거리로 보정
 - `ArucoHandTracker` → `Invert Depth`/`Depth Reference Meters`: 거리-깊이 반전 사용 여부와 기준 거리
+- `ArucoHandTracker` → `Marker Switch Threshold Ratio`: 마커 여러 개 동시 인식 시 전환 민감도 (기본 1.3)
+- `ArucoHandTracker` → `Invert Offset Rotation Direction`/`Invert Marker Rot X,Y,Z`: `Position Offset` 회전 방향이 반대로 나오면 조정
+- `ArucoMarkerConfig`(마커별) → `Position Offset`: 같은 면에 마커가 여러 개 있을 때(손등 3개), 기준 마커 대비 실측 필요
 - `SerialGloveReceiver` → `Axis Mapping`/`Invert X,Y,Z`: MPU6050 부착 방향에 따라 다름 (현재 값: `YZX`, `Invert X`, `Invert Z`)
-- `SerialGloveReceiver` → `Vision Correction Speed Deg Per Sec`: 마커 기반 IMU 보정이 얼마나 빠르게 따라잡을지
 - `FingerCurlAnimator` → `Curl Axis`: 장갑 모델 방향에 따라 조정 필요 (현재 값: `(0, 0, -1)`)
 - `HandVisual` → `Target Bone Name`/`Additional Offset`/`Visual Rotation Offset Euler`: 마커 부착 위치, 모델 기본 각도에 맞춰서 (현재 회전 오프셋: `X:0, Y:-45, Z:90`)
 - `HandVisual` → `Hover Point To Align`/`Attachment Point To Align`: `HoverPoint`/`ObjectAttachmentPoint` 연결 필요
 - `Hand` → `Hover Radius`: 손이 물체와 얼마나 가까워야 반응할지
-- `ArucoMarkerConfig`(마커별) → `Hand Rotation Offset Euler`/`Marker To Wrist Offset`: 마커 부착 위치 확정 후 실측
+- `GraspPoseTrigger` → 손가락별 `Stop Angle`(0~180도): 아두이노 프로토콜/서보 반전 설정이 바뀔 때마다 실측 재조정 필요 (아래 참고)
 
 ## 알려진 이슈 / 설계 결정 기록
 
-- **회전 담당**: IMU(MPU6050)가 전담하되 마커 기반으로 보정. `ArucoHandTracker`의 `Apply Rotation`은 반드시 꺼둘 것 (안 그러면 서로 충돌)
+- **회전 담당**: IMU(MPU6050)가 전담. `ArucoHandTracker`의 `Apply Rotation`은 반드시 꺼둘 것 (안 그러면 서로 충돌)
+- **마커 기반 IMU 드리프트 자동 보정은 시도했다가 되돌림**: 마커 회전을 절대 기준 삼아 IMU 요(yaw)
+  드리프트를 실시간 보정하는 기능을 구현했었으나, 마커/IMU 각각의 축 정의가 서로 다른 경로로
+  틀어져 있어 축 보정 조합을 찾기가 지나치게 어려웠음. 실익 대비 튜닝 난이도가 너무 높아 제거하고
+  순수 IMU 방식으로 복귀. 손등에 마커 3개를 붙이며 생긴 "동시 인식" 문제(아래 항목)만 별도로 해결함
+- **손등 마커 3개가 한 앵글에 동시에 잡히는 문제**: 매 프레임 "제일 크게 보이는 마커"만 단순
+  비교하면, 크기가 엇비슷할 때 프레임마다 다른 마커로 전환되면서 위치가 튀는 문제가 있었음.
+  ① 지금 추적 중인 마커보다 확실히(기본 30% 이상) 커야만 전환하는 히스테리시스, ② 마커별
+  고정 `Position Offset`을 현재 측정 회전만큼 돌려서 위치에 더하는 보정, 두 가지로 완화함.
+  단, 마커가 실제로 전환되는 그 순간 자체는 두 마커의 물리적 위치 차이만큼 여전히 소폭
+  튈 수 있음 (완전히 매끄럽게 없애려면 별도 블렌딩이 필요하나 아직 미구현)
+- **햅틱 프로토콜 변경**: 처음엔 Unity에서 0~180도 입력을 아두이노가 기대하던 0~1000 값으로
+  변환해서 보냈는데, 아두이노 펌웨어가 `H,각도1,...,각도5` 형식으로 0~180도를 직접 받는
+  방식으로 바뀌면서 그 변환 로직을 제거함 (`GraspPoseTrigger.cs`, `SerialGloveReceiver.cs`).
+  이 과정에서 서보 반전 설정(`servoReverse`)도 전 손가락 켜지는 쪽으로 바뀌어서, 예전에
+  실측해둔 각도값이 지금도 같은 물리적 결과를 낼지 보장할 수 없음 — 프로토콜이나 서보 반전
+  설정이 바뀔 때마다 손으로 다시 확인 필요
 - **웹캠 60fps 확보**: `ReadPixels`(동기) 대신 `AsyncGPUReadback`(비동기) 사용 — 직접 `ReadPixels`로 되돌리면 fps가 다시 떨어짐
 - **`GraspPoseTrigger`를 물체에 붙일 때 `[RequireComponent(typeof(Interactable))]`를 쓰면 안 됨** —
   이 씬은 `Interactable`이 보통 부모 오브젝트(`Throwable (...)`)에 있고 자식(Cube 등)에는 없는 구조가 흔함.
@@ -74,10 +92,6 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
   `Assets/Scripts/`에 있는 클래스를 `Assets/SteamVR/...` 쪽 스크립트에서 참조하면
   `CS0246` 에러가 남. 지금은 `Hand.cs`가 `GraspPoseTrigger`를 참조하고 있어서,
   `GraspPoseTrigger.cs`를 양쪽 폴더에 동일한 내용으로 넣어야 함
-- **마커 기반 IMU 보정을 추가한 배경**: MPU6050은 지자기 센서가 없어 요(yaw) 방향이 시간이
-  지나며 서서히 어긋남(드리프트). 매번 수동으로 재보정(T키)하는 대신, 마커가 보일 때마다
-  ArucoHandTracker가 계산하는 "카메라 기준 절대 방향"으로 IMU 값을 초당 일정 속도만큼
-  부드럽게 끌어당기도록 구현. 마커가 안 보이면 마지막 보정값을 유지한 채 IMU만으로 계속 추적
 - **Unity 6 + OpenCvSharp에서 API 이름이 계속 다름**: `PredefinedDictionaryType`, `DetectorParameters`,
   `SolvePnPMethod.IPPE_SQUARE` 등 확실하지 않으면 IDE 자동완성으로 확인하는 게 제일 빠름
 - **`SerialPort.ReadExisting()`이 Unity(Mono)에서 가끔 에러를 던지는 알려진 버그** — `BytesToRead` +

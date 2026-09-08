@@ -69,6 +69,14 @@ public class ArucoMarkerConfig
     public string faceName = "BackOfHand";
     [Tooltip("이 마커의 실제 한 변 길이 (미터). 자로 정확히 재서 입력")]
     public float markerSizeMeters = 0.02f;
+
+    [Tooltip("같은 면에 마커가 여러 개 있어서(예: 손등 3개) 서로 전환될 때 위치가 튀는 걸 줄이기 위한 " +
+             "고정 위치 보정값(미터, 마커의 로컬 좌표계 기준). 마커가 지금 측정한 회전값만큼 자동으로 " +
+             "돌려서 적용되므로, 손이 어느 각도로 돌아가 있어도 정확히 보정됩니다. 마커 하나를 " +
+             "기준(0,0,0)으로 두고, 나머지는 그 기준과 같은 손 자세에서 보고 위치가 같아지도록 " +
+             "실측해서 채우세요. 완전히 다른 방향을 보는 면(손바닥 vs 손등 등)끼리는 동시에 안 보이므로 " +
+             "보통 0으로 둬도 됩니다.")]
+    public Vector3 positionOffset = Vector3.zero;
 }
 
 public class ArucoHandTracker : MonoBehaviour
@@ -127,7 +135,6 @@ public class ArucoHandTracker : MonoBehaviour
     public bool showDebugWindow = true;
     public string activeMarkerFace = "-";
     public bool hasValidEstimate = false;
-
     [Header("칼만 필터 (위치 보정)")]
     public double kalmanProcessNoise = 4.0;
     public double kalmanMeasurementNoise = 0.5;
@@ -139,6 +146,46 @@ public class ArucoHandTracker : MonoBehaviour
     private float lastFrameTimestamp = -1f;
     private float measuredFPS = 0f;
     private float lastValidEstimateTime = -999f;
+
+    [Header("여러 마커 동시 인식 시 선택 안정화")]
+    [Tooltip("손등처럼 마커 여러 개가 한 앵글에 동시에 잡힐 때, 지금 추적 중인 마커보다 다른 마커가 " +
+             "이 비율만큼 더 커야만 그쪽으로 전환합니다 (예: 1.3 = 30% 더 커야 전환). 값이 1.0에 " +
+             "가까울수록 비슷한 크기의 마커 사이에서 자주 전환되어 위치가 튈 수 있습니다.")]
+    public float markerSwitchThresholdRatio = 1.3f;
+    private int currentlyTrackedMarkerId = -1;
+
+    [Tooltip("Position Offset을 회전시켜 적용할 때, 방향이 반대로(예: 90도 돌아갔을 때 부호가 반대로) " +
+             "나오면 이 체크박스를 켜서 뒤집어보세요.")]
+    public bool invertOffsetRotationDirection = false;
+
+    [Tooltip("마커 회전값(rawRotation) 자체의 X/Y/Z 축을 각각 반전. IMU의 Invert X/Y/Z와 같은 원리. " +
+             "특정 각도에서만 부호가 이상해지는 경우, 전체를 뒤집는 것보다 이걸로 축 하나씩 실험해보세요.")]
+    public bool invertMarkerRotX = false;
+    public bool invertMarkerRotY = false;
+    public bool invertMarkerRotZ = false;
+
+    // 마커 회전(rawRotation)의 x/y/z 축을 각각 반전. IMU의 ConvertImuQuaternion과 같은 방식.
+    private Quaternion InvertMarkerRotationAxes(Quaternion q)
+    {
+        float x = invertMarkerRotX ? -q.x : q.x;
+        float y = invertMarkerRotY ? -q.y : q.y;
+        float z = invertMarkerRotZ ? -q.z : q.z;
+        return new Quaternion(x, y, z, q.w);
+    }
+
+    // Position Offset을 마커의 현재 회전으로 돌려서 적용. invertOffsetRotationDirection이
+    // 켜져 있으면 회전의 역방향을 사용 (특정 각도에서 부호가 반대로 나오는 경우 대응용).
+    // 디버그용으로 마지막 계산값도 같이 기록해둠 (OnGUI에 표시).
+    public Vector3 debugLastMarkerRotationEuler;
+    public Vector3 debugLastAppliedOffset;
+    private Vector3 RotateOffset(Quaternion markerRotation, Vector3 offset)
+    {
+        Quaternion effectiveRotation = invertOffsetRotationDirection ? Quaternion.Inverse(markerRotation) : markerRotation;
+        Vector3 result = effectiveRotation * offset;
+        debugLastMarkerRotationEuler = markerRotation.eulerAngles;
+        debugLastAppliedOffset = result;
+        return result;
+    }
 
     [Header("모션 블러로 ID 판독 실패 시 위치라도 이어가기")]
     public float minMarkerPerimeterRate = 0.02f;
@@ -331,9 +378,27 @@ public class ArucoHandTracker : MonoBehaviour
         ArucoMarkerConfig bestConfig = null;
         Point2f[] bestCorners = null;
         double bestArea = -1;
+        int bestMarkerIdThisFrame = -1;
 
         if (ids != null && ids.Length > 0)
         {
+            // 손등처럼 마커 여러 개가 한 앵글에 동시에 잡히는 경우, "이번 프레임에 제일 큰 것"만
+            // 단순 비교하면 크기가 엇비슷할 때 프레임마다 다른 마커로 휙휙 전환되기 쉬움. 마커마다
+            // 물리적으로 다른 위치에 붙어있으므로, 전환될 때마다 위치가 살짝 튀는 것처럼 보임.
+            // -> 지금 추적 중인 마커가 여전히 보이면, 다른 마커가 "확실히"(markerSwitchThresholdRatio
+            // 배 이상) 더 크지 않은 이상 계속 지금 마커를 우선시함.
+            double currentTrackedArea = -1;
+            int currentTrackedIndex = -1;
+            for (int i = 0; i < ids.Length; i++)
+            {
+                if (ids[i] == currentlyTrackedMarkerId)
+                {
+                    currentTrackedIndex = i;
+                    currentTrackedArea = Cv2.ContourArea(corners[i]);
+                    break;
+                }
+            }
+
             for (int i = 0; i < ids.Length; i++)
             {
                 ArucoMarkerConfig cfg = markers.Find(m => m.markerId == ids[i]);
@@ -345,9 +410,23 @@ public class ArucoHandTracker : MonoBehaviour
                     bestArea = area;
                     bestConfig = cfg;
                     bestCorners = corners[i];
+                    bestMarkerIdThisFrame = ids[i];
                 }
             }
+
+            // 히스테리시스 적용: 후보가 지금 추적 중인 마커랑 다르고, 그 차이가 기준 비율보다
+            // 작으면 전환을 취소하고 원래 마커를 계속 사용
+            if (currentTrackedIndex != -1 && bestMarkerIdThisFrame != currentlyTrackedMarkerId
+                && bestArea < currentTrackedArea * markerSwitchThresholdRatio)
+            {
+                bestConfig = markers.Find(m => m.markerId == currentlyTrackedMarkerId);
+                bestCorners = corners[currentTrackedIndex];
+                bestMarkerIdThisFrame = currentlyTrackedMarkerId;
+            }
         }
+
+        if (bestConfig != null)
+            currentlyTrackedMarkerId = bestMarkerIdThisFrame;
 
         if (bestConfig != null)
         {
@@ -376,7 +455,7 @@ public class ArucoHandTracker : MonoBehaviour
             {
                 Cv2.SolvePnP(objPointsInput, imgPointsInput, camMatrix, distCoeffs, rvec, tvec,
                     false, SolvePnPMethod.IPPE_SQUARE);
-                ApplyPose(rvec, tvec);
+                ApplyPose(rvec, tvec, bestConfig);
             }
 
             activeMarkerFace = bestConfig.faceName;
@@ -448,6 +527,23 @@ public class ArucoHandTracker : MonoBehaviour
                         float depthZ = ApplyDepthInversion((float)tz);
                         Vector3 rawPosition = new Vector3(-(float)tx, -(float)ty, depthZ) * distanceScaleCorrection;
 
+                        // 연속성 추정 중엔 ID가 확정된 게 아니지만, 마지막으로 확정됐던 lastKnownConfig의
+                        // 오프셋을 그대로 재사용 (거의 같은 마커일 가능성이 높으므로). 손이 돌아간 상태에서도
+                        // 오프셋 방향이 같이 돌아가도록, 이번에 측정된 회전값만큼 돌려서 더함.
+                        Mat fallbackRotMat = new Mat();
+                        Cv2.Rodrigues(rvec, fallbackRotMat);
+                        Matrix4x4 fm = Matrix4x4.identity;
+                        for (int r = 0; r < 3; r++)
+                            for (int c = 0; c < 3; c++)
+                                fm[r, c] = (float)fallbackRotMat.At<double>(r, c);
+                        Quaternion fallbackRotation = Quaternion.LookRotation(
+                            new Vector3(fm.m20, -fm.m21, fm.m22),
+                            new Vector3(-fm.m10, fm.m11, -fm.m12));
+                        fallbackRotMat.Dispose();
+                        fallbackRotation = InvertMarkerRotationAxes(fallbackRotation);
+
+                        rawPosition += RotateOffset(fallbackRotation, lastKnownConfig.positionOffset);
+
                         kalmanX.UpdateMeasurement(rawPosition.x);
                         kalmanY.UpdateMeasurement(rawPosition.y);
                         kalmanZ.UpdateMeasurement(rawPosition.z);
@@ -476,7 +572,7 @@ public class ArucoHandTracker : MonoBehaviour
         }
     }
 
-    private void ApplyPose(Mat rvec, Mat tvec)
+    private void ApplyPose(Mat rvec, Mat tvec, ArucoMarkerConfig config)
     {
         double tx = tvec.At<double>(0);
         double ty = tvec.At<double>(1);
@@ -495,6 +591,13 @@ public class ArucoHandTracker : MonoBehaviour
             new Vector3(m.m20, -m.m21, m.m22),
             new Vector3(-m.m10, m.m11, -m.m12));
         rotMat.Dispose();
+        rawRotation = InvertMarkerRotationAxes(rawRotation);
+
+        // 같은 면에 마커가 여러 개 있어서 서로 전환될 때 튀는 걸 줄이기 위한 고정 오프셋.
+        // 손이 돌아간 상태에서도 오프셋 방향이 같이 돌아가도록, 이 마커가 지금 측정한
+        // 회전값(rawRotation)만큼 오프셋을 돌려서 더함 (별도의 축 보정/캘리브레이션 불필요 -
+        // 이미 계산된 rawRotation을 그대로 재사용하는 것뿐).
+        rawPosition += RotateOffset(rawRotation, config.positionOffset);
 
         kalmanX.UpdateMeasurement(rawPosition.x);
         kalmanY.UpdateMeasurement(rawPosition.y);
@@ -651,6 +754,7 @@ public class ArucoHandTracker : MonoBehaviour
         GUI.Label(new UnityEngine.Rect(10, 128, 500, 26), $"Active marker: {activeMarkerFace}  (valid: {hasValidEstimate}, 연속성추정: {isContinuityFallback})");
         if (targetTransform != null)
             GUI.Label(new UnityEngine.Rect(10, 156, 500, 26), $"Position: {targetTransform.position}");
+        GUI.Label(new UnityEngine.Rect(10, 184, 600, 26), $"마커 회전(euler): {debugLastMarkerRotationEuler}  적용된 오프셋: {debugLastAppliedOffset}");
 
         DrawMarkerOverlay();
     }
