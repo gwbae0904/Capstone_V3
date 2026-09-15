@@ -58,6 +58,10 @@ public class FingerCurlAnimator : MonoBehaviour
     [Tooltip("굽히는 국소 회전축. 모델 방향에 따라 안 맞으면 부호/축을 바꿔보세요")]
     public Vector3 curlAxis = Vector3.right;
 
+    [Header("디버그")]
+    [Tooltip("꺼두면 화면에 뼈 인식 상태 글자가 안 뜹니다. 시연/빌드 전에 꺼두세요.")]
+    public bool showDebugInfo = true;
+
     private FingerJointSet[] fingers; // 0:엄지 1:검지 2:중지 3:약지 4:소지
     private bool bonesFound = false;
 
@@ -153,6 +157,7 @@ public class FingerCurlAnimator : MonoBehaviour
 
     void OnGUI()
     {
+        if (!showDebugInfo) return;
         GUI.Label(new Rect(10, 300, 500, 24), $"FingerCurlAnimator: 뼈 인식됨={bonesFound}");
     }
 }

@@ -32,6 +32,10 @@ public class SerialGloveReceiver : MonoBehaviour
     [Range(0, 180)]
     public int defaultHapticStopAngle = 90;
 
+    [Header("디버그")]
+    [Tooltip("꺼두면 화면에 이 스크립트의 디버그 글자(커얼 값, IMU 회전, Hover/Grab 상태 등)가 안 뜹니다. 시연/빌드 전에 꺼두세요.")]
+    public bool showDebugInfo = true;
+
     [Header("디버그 (읽기 전용)")]
     public float[] curls = new float[5];
     public Quaternion currentRotation = Quaternion.identity;
@@ -251,6 +255,8 @@ public class SerialGloveReceiver : MonoBehaviour
 
     void OnGUI()
     {
+        if (!showDebugInfo) return;
+
         GUIStyle style = new GUIStyle(GUI.skin.label);
         style.normal.textColor = Color.black;
         style.fontStyle = FontStyle.Bold;

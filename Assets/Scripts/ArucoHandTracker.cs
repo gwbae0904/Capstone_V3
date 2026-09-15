@@ -94,7 +94,12 @@ public class ArucoHandTracker : MonoBehaviour
     public PredefinedDictionaryType dictionaryType = PredefinedDictionaryType.DictAprilTag_36h11;
 
     [Header("웹캠 설정")]
-    [Tooltip("체크를 끄면 iVCam을 무시하고 노트북 내장 기본 웹캠을 강제로 켭니다.")]
+    [Tooltip("이 이름을 포함하는 카메라를 최우선으로 찾습니다 (예: 'FHD60F'). 대소문자 구분 안 함. " +
+             "정확한 이름을 모르면 일단 Play 한 번 눌러서 Console에 찍히는 '사용 가능한 카메라 목록'을 " +
+             "확인하세요. 비워두면 이 우선순위는 건너뛰고 기존 방식(iVCam → 첫 번째 카메라)으로 찾습니다.")]
+    public string preferredCameraName = "";
+    [Tooltip("체크를 끄면 iVCam을 무시하고 노트북 내장 기본 웹캠을 강제로 켭니다. (Preferred Camera Name을 " +
+             "채워서 이미 찾았으면 이 옵션은 건너뜁니다)")]
     public bool useIVCam = true;
 
     public int requestedWidth = 1280;
@@ -244,9 +249,33 @@ public class ArucoHandTracker : MonoBehaviour
             requestedHeight = 960;
             requestedFPS = 60;
 
+            // 지금 PC에 연결된 카메라 전부를 콘솔에 찍어둠 - 정확한 실제 이름(Windows가 인식하는
+            // 이름)을 확인할 때 유용함. 마케팅 이름(예: "FHD60F")과 실제 디바이스 이름이 다를 수 있음.
+            string deviceList = string.Join(", ", System.Array.ConvertAll(WebCamTexture.devices, d => d.name));
+            UnityEngine.Debug.Log($"[ArucoHandTracker] 사용 가능한 카메라 목록: {deviceList}");
+
             string finalCamName = "";
 
-            if (useIVCam)
+            // 1순위: Preferred Camera Name에 지정한 이름을 포함하는 카메라
+            if (!string.IsNullOrEmpty(preferredCameraName))
+            {
+                foreach (var device in WebCamTexture.devices)
+                {
+                    if (device.name.ToLower().Contains(preferredCameraName.ToLower()))
+                    {
+                        finalCamName = device.name;
+                        UnityEngine.Debug.Log("[ArucoHandTracker] 지정한 카메라를 찾았습니다: " + finalCamName);
+                        break;
+                    }
+                }
+                if (string.IsNullOrEmpty(finalCamName))
+                {
+                    UnityEngine.Debug.LogWarning($"[ArucoHandTracker] Preferred Camera Name '{preferredCameraName}'을(를) 포함하는 카메라를 못 찾았습니다. 다음 우선순위로 넘어갑니다.");
+                }
+            }
+
+            // 2순위: iVCam
+            if (string.IsNullOrEmpty(finalCamName) && useIVCam)
             {
                 foreach (var device in WebCamTexture.devices)
                 {
@@ -259,6 +288,7 @@ public class ArucoHandTracker : MonoBehaviour
                 }
             }
 
+            // 3순위: 첫 번째로 찾은(iVCam이 아닌) 카메라, 그마저 없으면 그냥 첫 번째
             if (string.IsNullOrEmpty(finalCamName) && WebCamTexture.devices.Length > 0)
             {
                 foreach (var device in WebCamTexture.devices)
@@ -741,7 +771,7 @@ public class ArucoHandTracker : MonoBehaviour
         if (inputSource == InputSource.Webcam)
         {
             webcamStatus = (webcamTexture != null && webcamTexture.isPlaying)
-                ? $"웹캠: {webcamTexture.width}x{webcamTexture.height} @ 실측 {measuredFPS:F1}fps (요청 {requestedFPS}fps)"
+                ? $"웹캠: {webcamTexture.deviceName} — {webcamTexture.width}x{webcamTexture.height} @ 실측 {measuredFPS:F1}fps (요청 {requestedFPS}fps)"
                 : "웹캠: 아직 재생 안 됨";
         }
         else

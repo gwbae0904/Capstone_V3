@@ -118,6 +118,10 @@ namespace Valve.VR.InteractionSystem
         public Transform hoverSphereTransform;
         public Transform objectAttachmentPoint;
 
+        [Header("물리 콜라이더 (HandColliderRight 프리팹)")]
+        [Tooltip("손이 물체에 실제로 부딪혀서 밀어낼 수 있게 해주는 콜라이더. 연결 안 하면 이 기능은 그냥 꺼짐(기존처럼 손이 뚫고 지나감).")]
+        public HandCollider handCollider;
+
         public Interactable hoveringInteractable => hoveringInteractables.Count > 0 ? hoveringInteractables[0] : null;
         public GameObject currentAttachedObject => currentAttachedObjectInfo.HasValue ? currentAttachedObjectInfo.Value.attachedObject : null;
 
@@ -208,6 +212,18 @@ namespace Valve.VR.InteractionSystem
             if (currentAttachedObjectInfo.HasValue && currentAttachedObjectInfo.Value.interactable != null)
             {
                 currentAttachedObjectInfo.Value.interactable.SendMessage("HandAttachedUpdate", this, SendMessageOptions.DontRequireReceiver);
+            }
+        }
+
+        // ArucoHandTracker(위치)/SerialGloveReceiver(회전)가 각자 자기 Update()에서
+        // 이 오브젝트의 transform을 갱신함. Unity는 모든 Update()가 끝난 뒤에야
+        // LateUpdate()를 실행하는 걸 보장하므로, 여기서 읽는 transform은 항상 이번 프레임에
+        // 트래킹이 다 반영된 "최신" 값임. 이 값을 물리 콜라이더 쪽으로 넘겨줌.
+        protected virtual void LateUpdate()
+        {
+            if (handCollider != null)
+            {
+                handCollider.MoveTo(transform.position, transform.rotation);
             }
         }
 
@@ -395,6 +411,11 @@ namespace Valve.VR.InteractionSystem
             currentAttachedObjectInfo = attached;
             hoverLocked = true;
 
+            // 잡은 물체랑 손 콜라이더가 서로 밀어내려 하면서 떨리는(jitter) 걸 방지 -
+            // 잡고 있는 동안은 손 콜라이더의 충돌 감지를 잠깐 꺼둠
+            if (handCollider != null)
+                handCollider.SetCollisionDetectionEnabled(false);
+
             if (interactable != null)
                 interactable.SendMessage("OnAttachedToHand", this, SendMessageOptions.DontRequireReceiver);
         }
@@ -419,6 +440,10 @@ namespace Valve.VR.InteractionSystem
 
             currentAttachedObjectInfo = null;
             hoverLocked = false;
+
+            // 놓았으니 충돌 감지 다시 켜기
+            if (handCollider != null)
+                handCollider.SetCollisionDetectionEnabled(true);
 
             if (attached.interactable != null)
                 attached.interactable.SendMessage("OnDetachedFromHand", this, SendMessageOptions.DontRequireReceiver);
