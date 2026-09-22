@@ -7,9 +7,7 @@ namespace Valve.VR.InteractionSystem
     public class HandCollider : MonoBehaviour
     {
         private new Rigidbody rigidbody;
-        // [HideInInspector]를 제거함 - 이게 붙어있으면 Inspector에 필드 자체가 안 보여서
-        // 드래그로 연결할 방법이 없었음. Hand를 자동으로 찾아주는 코드도 따로 없었어서,
-        // 수동으로 드래그해서 연결할 수 있도록 보이게 함.
+        [HideInInspector]
         [Tooltip("이 콜라이더를 구동하는 Hand. 원본은 HandPhysics를 거쳐서 참조했지만, 우리 버전은 Hand를 직접 참조합니다.")]
         public Hand hand;
 

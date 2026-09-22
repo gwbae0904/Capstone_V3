@@ -42,6 +42,7 @@ public class SerialGloveReceiver : MonoBehaviour
     public bool isConnected = false;
 
     private bool isHandClosed = false;
+    private int[] lastSentHapticValues = null;
 
     private SerialPort serialPort;
     private string leftoverBuffer = "";
@@ -153,15 +154,34 @@ public class SerialGloveReceiver : MonoBehaviour
                 hapticValues = new int[] { v, v, v, v, v };
             }
 
-            SendHapticCommand(hapticValues);
+            // 값이 실제로 바뀌었을 때만 전송. 매 프레임 계속 똑같은 값을 반복해서
+            // 보내면(초당 수십 번), 시리얼 라인이 아주 가끔 중간에 끊기거나 겹쳐서
+            // 아두이노가 순간적으로 잘못된 값을 읽는 경우가 생길 수 있음 - 이게 서보가
+            // 노이즈처럼 미세하게 떨리는 것처럼 보이는 원인이었음. 값이 안 바뀌었으면
+            // 아두이노도 이미 그 각도를 유지하고 있으니 다시 보낼 필요가 없음.
+            if (!HapticValuesEqual(hapticValues, lastSentHapticValues))
+            {
+                SendHapticCommand(hapticValues);
+                lastSentHapticValues = (int[])hapticValues.Clone();
+            }
             isHandClosed = true;
         }
         else if (isHandClosed)
         {
             // hover도 grab도 아닌 상태로 돌아오면 완전히 풀기
             isHandClosed = false;
-            SendHapticCommand(new int[] { 0, 0, 0, 0, 0 });
+            int[] zero = new int[] { 0, 0, 0, 0, 0 };
+            SendHapticCommand(zero);
+            lastSentHapticValues = zero;
         }
+    }
+
+    private bool HapticValuesEqual(int[] a, int[] b)
+    {
+        if (a == null || b == null || a.Length != b.Length) return false;
+        for (int i = 0; i < a.Length; i++)
+            if (a[i] != b[i]) return false;
+        return true;
     }
 
     private bool TryParseLine(string line)

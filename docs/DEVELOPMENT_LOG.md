@@ -24,7 +24,8 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
 | `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), 회전 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지 각도(0~180도, 변환 없이 그대로)를 아두이노로 전송. `Show Debug Info`로 화면 디버그 텍스트 on/off |
 | `FingerCurlAnimator.cs` | curl 값으로 장갑 모델의 손가락 뼈를 실제로 굽힘. 관절별(meta/j0/j1/j2) 비율과 `Curl Axis`로 굽힘 방향/깊이 조정. 물체를 잡는 동안은 자동으로 손을 떼고 grasp pose 애니메이터에게 자세를 맡김. `Show Debug Info`로 화면 디버그 텍스트 on/off |
 | `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지 각도(0~180도, 아두이노에 변환 없이 직접 전송), 물체별 커스텀 Grab Threshold도 여기서 설정. **`Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한 내용으로 있어야 함** (아래 어셈블리 분리 이슈 참고) |
-| `HandCollider.cs` | 원본 SteamVR HandPhysics 계열 코드를 기반으로, 손가락 관절별 콜라이더로 물체와의 실제 물리 충돌(밀어내기)을 구현. `Hand.cs`가 매 프레임 `MoveTo()`로 목표 위치/회전을 넘겨주면, 속도 기반으로 그 위치를 향해 밀고 들어가는 방식으로 동작 (아래 "물리 손 콜라이더 통합" 참고) |
+| `HandCollider.cs` | 원본 SteamVR HandPhysics 계열 코드. **손가락 관절별 물리 충돌을 시도했으나 이름 충돌 버그로 되돌림** (아래 "물리 손 콜라이더 시도와 되돌림" 참고) — 현재는 씬에서 제거된 상태 |
+| `ResetObjectsOnKeyPress.cs` | `Backspace` 키로, 씬의 `Throwable` 붙은 물체(Sphere/Cube 등)를 전부 자동으로 찾아 Play 시작 시점의 위치/회전으로 되돌리고 속도도 0으로 리셋. 테스트 중 물체를 이리저리 던지고 잡은 뒤 빠르게 초기화할 때 사용 |
 | `PrimitiveSizeSetter.cs` | Unity 기본 프리미티브(Cube/Sphere) 전용. `Size In Meters`에 정육면체면 한 변 길이, 구면 지름을 입력하면 그 실제 크기로 자동 스케일 조정. `[ExecuteAlways]`라 에디터에서 값 바꾸면 Play 없이 바로 반영됨 |
 | `QuitOnKeyPress.cs` | 지정한 키(기본 Esc)를 누르면 프로그램 종료. 빌드된 실행 파일에는 에디터의 정지 버튼이 없어서 추가함 |
 | `KeyboardHandDriver.cs` | 하드웨어 없이 WASD+Space로 테스트할 때 사용 |
@@ -37,36 +38,31 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
 | `Hand.cs` | grab 판정을 FixedUpdate→Update로 이동(저프레임 대응). `SnapOnAttach` 실제 처리 로직 추가, `objectAttachmentPoint`에 직접 부모로 붙여서 잡은 뒤에도 손 모양 보정을 계속 따라가게 함. `GetTrackedObjectVelocity/AngularVelocity` 스무딩. hover 대상을 가장 가까운 것 하나로 제한(물체 여러 개가 겹쳐있을 때 하나가 안 놓아지던 문제 해결). 물체별 커스텀 Grab Threshold 지원. **`Hand Collider` 필드 추가 — `LateUpdate()`에서 매 프레임 손의 최신 위치/회전을 `HandCollider.MoveTo()`로 전달, 물체를 잡거나 놓을 때 `SetCollisionDetectionEnabled()`로 충돌 감지를 켜고 끔** (잡은 물체와 손 콜라이더가 서로 밀어내며 떨리는 것 방지) |
 | `HandVisual.cs` | 장갑 3D 모델을 인스턴스화하고, 지정한 뼈(`Target Bone Name`)가 항상 RightHand 원점에 오도록 매 프레임 재정렬. `HoverPoint`/`ObjectAttachmentPoint`도 모델과의 상대 위치+회전 관계를 캡처해서 매 프레임 재현. `Visual Rotation Offset Euler`로 모델의 기본 조형 각도도 보정 가능 |
 
-## 물리 손 콜라이더 통합 (`HandCollider` / `HandColliderRight.prefab`)
+## 물리 손 콜라이더 시도와 되돌림 (`HandCollider` / `HandColliderRight.prefab`)
 
 손이 물체를 그대로 통과하던 문제를 해결하기 위해, 원본 SteamVR의 물리 기반 손(Physics
-Hand) 시스템을 가져와 통합했습니다.
+Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 버그 때문에 결국 되돌리고
+`Hand.cs`를 이전 버전으로, 씬에서 `HandColliderRight`를 삭제**했습니다. 나중에 다시
+시도한다면 이 문제를 반드시 피해야 합니다.
 
 - **구조**: `HandColliderRight` 프리팹 안에 손가락 관절 이름(`finger_index_1_r` 등, Valve
-  표준 스켈레톤 명명 규칙)을 딴 Transform들이 있고, 각각에 `SphereCollider`가 붙어있음.
-  `HandCollider` 컴포넌트의 `Finger Colliders` 배열에 손가락별로 연결되어 있음. 엄지는
-  1개, 검지/중지는 3개(전체 관절), 약지/소지는 2개(밑동 제외)만 연결되어 있음 — 의도된
-  단순화로 보이며 버그 아님
-- **동작 원리**: 근처에 아무 콜라이더도 없으면 그냥 목표 위치로 순간이동(teleport)하듯
-  따라가다가, 반경 안에 뭔가 감지되면 속도(velocity)를 계산해 그 목표를 향해 서서히
-  밀고 들어가는 방식(`ExecuteFixedUpdate`)으로 전환됨. 이 방식 덕분에 물체를 실제로
-  "밀어내는" 물리적 상호작용이 가능함
+  표준 스켈레톤 명명 규칙)을 딴 Transform들이 있고, 각각에 `SphereCollider`가 붙어있었음.
+  엄지는 1개, 검지/중지는 3개(전체 관절), 약지/소지는 2개(밑동 제외)만 연결
 - **`Hand` 필드가 `[HideInInspector]`로 숨겨져 있던 문제**: 원래 코드에 이 속성이 붙어있어
-  Inspector에서 아예 안 보였음. 자동으로 채워주는 코드도 없어서 연결할 방법이 없었음 →
-  속성을 제거해서 수동으로 드래그 연결 가능하게 수정
-- **`Is Kinematic`은 반드시 꺼져 있어야 함(중요)**: 처음에 "코드로 위치를 지정하는
-  물체는 Kinematic이어야 한다"는 일반론으로 판단해 켜봤으나, 그러면
-  `rigidbody.angularVelocity` 직접 대입 코드에서 `Setting angular velocity of a
-  kinematic body is not supported` 에러가 발생함. 이 스크립트는 애초에 "속도를 계산해서
-  서서히 밀고 들어가는" 비운동학적(non-kinematic) 리지드바디를 전제로 설계되어 있어서,
-  Kinematic을 끈 원본 설정이 오히려 맞는 상태였음
-- **`HandColliderRight`는 `RightHand`의 자식으로 두어도 정상 동작함**: 이론적으로는
-  "물리로 움직이는 자식 객체가, 코드로 직접 transform을 바꾸는 부모 밑에 있으면 충돌
-  경합이 생길 수 있다"는 우려가 있었으나, 실제 테스트에서는 문제없이 잘 동작함
-  (`Hand.cs`의 `MoveTo()`가 월드 좌표를 직접 넘기는 방식이라 부모-자식 관계와 무관하게
-  안정적으로 따라감)
-- **잡기 연동**: 물체를 잡을 때(`AttachObject`) 손 콜라이더의 충돌 감지를 끄고, 놓을 때
-  (`DetachObject`) 다시 켜서, 잡은 물체와 손이 서로 밀어내며 떨리는 현상을 방지함
+  Inspector에서 아예 안 보였음 → 속성을 제거해서 수동 연결 가능하게 함
+- **`Is Kinematic`은 꺼져 있는 게 맞았음**: "코드로 위치를 지정하는 물체는 Kinematic이어야
+  한다"는 일반론으로 판단해 켜봤으나, `rigidbody.angularVelocity` 직접 대입 코드에서
+  `Setting angular velocity of a kinematic body is not supported` 에러 발생. 이 스크립트는
+  애초에 "속도를 계산해서 서서히 밀고 들어가는" 비운동학적 리지드바디를 전제로 설계됨
+- **최종적으로 되돌린 결정적 버그 — 이름 충돌**: `HandColliderRight` 안의 관절 Transform
+  이름(`finger_index_1_r`, `finger_middle_0_r` 등)이 **진짜 장갑 모델의 뼈 이름과 정확히
+  똑같았음**. `FingerCurlAnimator.FindDeepChild()`가 이름만으로 뼈를 검색하는 방식이라,
+  씬에 이름이 겹치는 오브젝트가 있으면 어느 쪽을 찾을지 보장이 안 됨. 실제로 검지·중지만
+  손가락이 이상하게 안 굽혀지는 증상으로 나타났는데, 하필 검지·중지에만 관절 3개짜리
+  콜라이더가 온전히 있었고(약지·소지는 2개뿐) 그게 힌트가 되어 원인을 찾음.
+  **`HandColliderRight`를 비활성화하는 것만으론 해결 안 됨** — Unity의 이름 검색은
+  비활성화된 오브젝트도 찾아내므로, 완전히 씬에서 삭제해야 충돌이 사라짐. 다시 시도한다면
+  관절 콜라이더 이름을 장갑 모델과 겹치지 않게(예: 접미사 추가) 짓는 게 필수
 
 ## 개인별로 맞춰야 하는 값 (Inspector에서, 커밋 전에 되돌리기)
 
@@ -82,8 +78,7 @@ Hand) 시스템을 가져와 통합했습니다.
 - `HandVisual` → `Target Bone Name`/`Additional Offset`/`Visual Rotation Offset Euler`: 마커 부착 위치, 모델 기본 각도에 맞춰서 (현재 회전 오프셋: `X:0, Y:-45, Z:90`)
 - `HandVisual` → `Hover Point To Align`/`Attachment Point To Align`: `HoverPoint`/`ObjectAttachmentPoint` 연결 필요
 - `Hand` → `Hover Radius`: 손이 물체와 얼마나 가까워야 반응할지
-- `Hand` → `Hand Collider`: `HandColliderRight` 연결 필요 (물리 충돌 기능을 쓰려면)
-- `HandColliderRight`(`HandCollider` 컴포넌트) → `Hand`: `RightHand` 연결 필요
+- `ResetObjectsOnKeyPress` → `Reset Key`: 물체 리셋 키 변경 가능 (기본 Backspace)
 - `GraspPoseTrigger` → 손가락별 `Stop Angle`(0~180도): 아두이노 프로토콜/서보 반전 설정이 바뀔 때마다 실측 재조정 필요
 - `QuitOnKeyPress` → `Quit Key`: 원하는 종료 키로 변경 가능 (기본 Esc)
 - `PrimitiveSizeSetter`(Cube/Sphere) → `Size In Meters`: 원하는 물체 크기로 조정
@@ -141,3 +136,23 @@ Hand) 시스템을 가져와 통합했습니다.
   맞춰 축소 렌더링되는 미리보기이고, 빌드본이 실제 해상도로 렌더링하는 최종 결과물임
 - **빌드본엔 에디터의 정지(Pause)/정지(Stop) 버튼이 없음**: 개발용 도구라 빌드에는 포함
   안 됨. `QuitOnKeyPress.cs`로 별도 종료 키(Esc)를 만들어서 대응함
+- **모터가 노이즈처럼 미세하게 계속 떨리는 문제**: hover/grab 상태인 동안 `SerialGloveReceiver`가
+  매 프레임(초당 수십 번) 완전히 똑같은 햅틱 명령을 아두이노로 계속 반복 전송하고 있었음.
+  값이 그대로인데도 시리얼 라인이 쉴 새 없이 몰리면서, 아주 가끔 한 줄이 중간에 끊기거나
+  겹쳐 아두이노가 순간적으로 잘못된 값을 읽는 것으로 추정됨 (직접 아두이노 앱으로 한 번만
+  명령을 보내면 안 떨리는 것으로 비교 확인). 마지막으로 보낸 값과 실제로 달라졌을 때만
+  전송하도록 수정해서 해결
+- **`Assets/Scripts/`와 `Assets/SteamVR/.../Scripts/`에 있는 두 `GraspPoseTrigger.cs`가
+  서로 다른 상태로 벌어지는 문제**: 물체별 `Custom Grab Threshold`가 극단적인 값(0.05)을
+  넣어도 전혀 반영이 안 되는 증상이 있었음. 원인은 두 폴더가 서로 다른 컴파일 단위라, 오브젝트에
+  실제로 붙어있는 컴포넌트가 어느 한쪽 코드만 최신 상태였고 다른 한쪽(예: `Hand.cs`가 참조하는
+  쪽)은 예전 버전이라 새 필드 자체가 없었던 것. 파일 내용을 똑같이 맞추는 것만으론 부족하고,
+  **두 스크립트를 실제로 오브젝트에 모두 컴포넌트로 붙여야** 함(하나만 붙어있으면 다른 한쪽
+  어셈블리 코드에서는 항상 null로 보임) — Inspector 컴포넌트 헤더 우클릭 → `Edit Script`로
+  지금 어느 파일이 실제로 붙어있는지 확인 가능
+- **웹캠 요청 해상도 960이 자동으로 720으로 낮아지던 문제**: `ArucoHandTracker`가
+  1280x960@60fps를 요청했는데, 960이라는 세로 해상도가 이 카메라의 표준 지원 해상도가
+  아니라서 드라이버가 제일 가까운 720으로 대신 내려버렸던 것. 카메라가 실제로 1920x1080@60fps를
+  지원하는 것을 Windows 카메라 설정에서 확인했으나, 막상 1920x1080으로 올려보니 이 프로젝트
+  기준으로는 부하가 커서 프레임이 떨어져 다시 1280x960으로 되돌림 — 해상도를 바꿀 때는 성능
+  저하 여부를 실제로 확인 후 결정할 것
