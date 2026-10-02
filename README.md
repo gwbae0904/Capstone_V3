@@ -10,7 +10,7 @@
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/images/demo_grab.jpg" alt="실제 손과 Unity 가상 손이 동시에 물체를 잡는 모습" width="100%">
+      <img src="docs/images/demo_grab.png" alt="실제 손과 Unity 가상 손이 동시에 물체를 잡는 모습" width="100%">
       <p align="center"><sub>실제 손의 파지 동작이 실시간으로 Unity 가상 손에 그대로 반영됩니다</sub></p>
     </td>
     <td width="50%">
