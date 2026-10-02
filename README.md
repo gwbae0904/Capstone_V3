@@ -10,7 +10,7 @@
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/images/demo_grab.png" alt="실제 손과 Unity 가상 손이 동시에 물체를 잡는 모습" width="100%">
+      <img src="docs/images/demo_grab.jpg" alt="실제 손과 Unity 가상 손이 동시에 물체를 잡는 모습" width="100%">
       <p align="center"><sub>실제 손의 파지 동작이 실시간으로 Unity 가상 손에 그대로 반영됩니다</sub></p>
     </td>
     <td width="50%">
@@ -41,7 +41,10 @@
   제어 없이도 물체 크기에 맞는 저항감을 물리적으로 구현 — 릴 내부 스프링이 와이어 장력을
   항상 팽팽하게 유지하고, 가변저항으로 굽힘 정도를 측정
 - **물체별 손가락 반응 커스터마이징**: 잡는 물체마다 손가락별 굽힘 한계(0~180도 서보 각도)·
-  손모양·grab 판정 기준을 독립적으로 설정 가능해, 물체 크기에 따라 다른 파지감 구현
+  손모양·grab 판정 기준·손 안에서의 부착 위치를 독립적으로 설정 가능해, 물체 크기에 따라
+  다른 파지감 구현
+- **휴대폰 리모컨 시점 조작**: ZIG SIM 앱으로 휴대폰의 자이로 회전과 터치 좌표를 UDP(OSC)로
+  받아, 오른손이 장갑을 낀 상태에서도 왼손으로 시점 회전과 이동을 조작
 
 ## 동작 흐름
 
@@ -63,8 +66,9 @@
    ↓
 [Unity 가상 손]  ←──  [아두이노: 포텐셔미터(손가락 굽힘) + MPU6050(손 회전, IMU)]
    ↓                        ↑ USB 시리얼 (115200 baud)
-[물체 grab/throw,          [서보모터 (손가락별 저항, Lucas Glove 방식)]
- 물리적 충돌]
+[물체 grab/throw]      [서보모터 (손가락별 저항, Lucas Glove 방식)]
+
+[휴대폰(ZIG SIM 앱)] ──UDP(OSC, 9001포트)──→ [Unity: 시점 회전 + 이동]
 ```
 
 - **위치**: 손 여러 면(손바닥/정면/손날/손등)에 AprilTag(36h11) 마커 총 6개를 붙이고,
@@ -77,6 +81,8 @@
   정확히 반영되어 스냅됨
 - **햅틱**: 손가락별 서보모터가 물체 크기에 맞는 각도(0~180도)로 미리 세팅되어, 실제
   저항은 기계 구조가 담당
+- **시점 조작**: 오른손은 장갑 착용, 왼손은 휴대폰을 리모컨처럼 들고 시점 회전(자이로)과
+  이동(터치 조이스틱)을 담당
 
 ## 개발 환경
 
@@ -89,6 +95,7 @@
 | 마커 시스템 | ArUco / AprilTag (36h11) |
 | 베이스 | SteamVR Interaction System (OpenVR 의존성 제거 후 커스터마이징) |
 | 아두이노 | ESP32 + MPU6050 (DMP) + 가변저항 5개 + 서보모터 5개 |
+| 시점 조작 | ZIG SIM 앱(iOS/Android) + UDP(OSC) 수신 |
 
 ## 팀원
 
@@ -135,7 +142,12 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
 - `Arduino/GloveFirmware/GloveFirmware.ino` 참고
 - 시리얼 프로토콜(115200 baud): `c0,c1,c2,c3,c4,qw,qx,qy,qz` (curl 5개 + IMU 쿼터니언), 명령어 `t`(영점 재조절)/`r`(3초 손가락 캘리브레이션)/`H,각도1,...,각도5`(0~180도 서보 각도 직접 지정)
 
-### 7. Play
+### 7. 휴대폰 리모컨 (선택)
+- 휴대폰에 **ZIG SIM** 앱 설치 → PC의 IPv4 주소와 포트 `9001`을 입력해 Quaternion + Touch 전송 설정
+- PC와 휴대폰이 같은 Wi-Fi에 있어야 하고, **Windows 방화벽에서 UDP 9001을 허용**해야 함 (막히면 `ZigSimConnectionTest`의 `Show Debug Info`로 수신 패킷 수를 보면서 확인)
+- 필요 없으면 `ZigSimConnectionTest` 컴포넌트를 비활성화하면 `FallbackCameraController`(WASD+마우스)만으로 조작 가능
+
+### 8. Play
 `DotTracker` 선택 → 웹캠/마커 인식 확인 후 실행. **`Esc` 키로 언제든 종료 가능** (빌드본 포함),
 **`Backspace` 키로 물체들을 Play 시작 위치로 즉시 리셋** 가능
 
@@ -168,6 +180,7 @@ Unity Hub → Open → 클론한 폴더 선택. Unity 6.3 LTS(6000.3.19f1)가 �
   - Microsoft Visual C++ 재배포 패키지 (OpenCvSharp 네이티브 라이브러리 구동에 필요)
   - 아두이노 USB-시리얼 드라이버 (보드 종류에 따라 CP210x/CH340 등)
   - 웹캠 접근 권한(최초 실행 시 Windows가 물어봄), 출처 미상 앱 경고(SmartScreen) 시 "추가 정보 → 실행"
+  - ZIG SIM 리모컨을 쓴다면 방화벽에서 UDP 9001 허용 (아래 참고)
 - **iOS(아이패드)/라즈베리파이는 사실상 배포 불가**: `OpenCvSharp4`가 iOS 런타임 패키지를
   제공하지 않고 `System.IO.Ports.SerialPort`도 iOS에서 동작하지 않음. 라즈베리파이(ARM
   리눅스)는 OpenCvSharp 자체는 패키지가 있으나 Unity가 Standalone ARM Linux 빌드를

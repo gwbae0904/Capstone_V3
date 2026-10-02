@@ -38,7 +38,7 @@ int maxRaw[NUM_FINGERS] = { 0, 0, 0, 0, 0 };
 bool calibrationComplete = false;
 
 // 손가락별 센서 방향 반전 설정
-bool flipCurl[NUM_FINGERS] = { true, true, false, false, false };
+bool flipCurl[NUM_FINGERS] = { true, true, false, true, false };
 
 const bool DEBUG_MODE = false;
 

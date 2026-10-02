@@ -21,21 +21,21 @@ MediaPipe(Python) → 색상 점 쌍+IMU → ArUco → AprilTag 36h11 순서로 
 | 파일 | 역할 |
 |---|---|
 | `ArucoHandTracker.cs` | 웹캠/영상파일 입력 → ArUco/AprilTag 인식 → 위치 계산 → 칼만 필터 → RightHand에 적용. `Preferred Camera Name`으로 특정 웹캠을 이름으로 지정 가능(우선순위: 지정한 이름 → iVCam → 첫 번째 카메라), Play 시 Console에 연결된 카메라 목록 전체를 출력. `Invert Depth`로 거리-깊이 관계 반전 가능. 한 앵글에 마커가 여러 개(손등 3개) 동시에 잡힐 때 `Marker Switch Threshold Ratio`로 잦은 전환을 억제하고, 마커별 `Position Offset`을 현재 회전만큼 돌려서 더해 전환 시 위치 튐을 줄임 |
-| `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), 회전 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지 각도(0~180도, 변환 없이 그대로)를 아두이노로 전송. `Show Debug Info`로 화면 디버그 텍스트 on/off |
+| `SerialGloveReceiver.cs` | 아두이노 시리얼 수신(curl+IMU), 회전 적용, tare 명령 전송. `Axis Mapping`/`Invert X,Y,Z`로 축 보정. hover/grab 상태에 따라 물체별 햅틱 정지 각도(0~180도, 변환 없이 그대로)를 아두이노로 전송. 값이 바뀔 때만 전송(아래 모터 떨림 항목 참고). `Show Debug Info`로 화면 디버그 텍스트 on/off |
 | `FingerCurlAnimator.cs` | curl 값으로 장갑 모델의 손가락 뼈를 실제로 굽힘. 관절별(meta/j0/j1/j2) 비율과 `Curl Axis`로 굽힘 방향/깊이 조정. 물체를 잡는 동안은 자동으로 손을 떼고 grasp pose 애니메이터에게 자세를 맡김. `Show Debug Info`로 화면 디버그 텍스트 on/off |
 | `GraspPoseTrigger.cs` | 물체를 잡으면 그 물체에 맞는 손모양(`Rest`/`SphereGrab`/`StickGrab`/`pinchGrab`)으로 `Animator.Play()`로 즉시 전환. 손가락별 햅틱 정지 각도(0~180도, 아두이노에 변환 없이 직접 전송), 물체별 커스텀 Grab Threshold도 여기서 설정. **`Assets/Scripts/`와 `Assets/SteamVR/InteractionSystem/Core/Scripts/` 두 곳에 동일한 내용으로 있어야 함** (아래 어셈블리 분리 이슈 참고) |
-| `HandCollider.cs` | 원본 SteamVR HandPhysics 계열 코드. **손가락 관절별 물리 충돌을 시도했으나 이름 충돌 버그로 되돌림** (아래 "물리 손 콜라이더 시도와 되돌림" 참고) — 현재는 씬에서 제거된 상태 |
 | `ResetObjectsOnKeyPress.cs` | `Backspace` 키로, 씬의 `Throwable` 붙은 물체(Sphere/Cube 등)를 전부 자동으로 찾아 Play 시작 시점의 위치/회전으로 되돌리고 속도도 0으로 리셋. 테스트 중 물체를 이리저리 던지고 잡은 뒤 빠르게 초기화할 때 사용 |
-| `PrimitiveSizeSetter.cs` | Unity 기본 프리미티브(Cube/Sphere) 전용. `Size In Meters`에 정육면체면 한 변 길이, 구면 지름을 입력하면 그 실제 크기로 자동 스케일 조정. `[ExecuteAlways]`라 에디터에서 값 바꾸면 Play 없이 바로 반영됨 |
 | `QuitOnKeyPress.cs` | 지정한 키(기본 Esc)를 누르면 프로그램 종료. 빌드된 실행 파일에는 에디터의 정지 버튼이 없어서 추가함 |
+| `PrimitiveSizeSetter.cs` | Unity 기본 프리미티브(Cube/Sphere) 전용. `Size In Meters`에 정육면체면 한 변 길이, 구면 지름을 입력하면 그 실제 크기로 자동 스케일 조정. `[ExecuteAlways]`라 에디터에서 값 바꾸면 Play 없이 바로 반영됨 |
+| `ZigSimConnectionTest.cs` | 휴대폰의 ZIG SIM 앱에서 UDP(OSC, 9001포트)로 쿼터니언(회전)과 터치 좌표를 받아, 시점 회전(피치/요/롤 각각 반전·감도 조절 가능)과 이동(터치를 가상 조이스틱처럼 사용)을 처리. `R` 키로 현재 폰 방향을 정면으로 재설정. `Show Debug Info`로 수신 패킷 수·보낸 IP·파싱 오류를 화면에 표시 (상세 내용은 아래 참고) |
 | `KeyboardHandDriver.cs` | 하드웨어 없이 WASD+Space로 테스트할 때 사용 |
-| `FallbackCameraController.cs` | 헤드셋 없이 WASD+마우스 우클릭으로 시점 조작 (개발용). `Show Instructions`로 화면 안내 문구 on/off |
+| `FallbackCameraController.cs` | 헤드셋 없이 WASD+마우스 우클릭으로 시점 조작 (개발용). `Show Instructions`로 화면 안내 문구 on/off. `ZigSimConnectionTest`가 폰 신호로 시점을 덮어쓰기 전까지는 이 스크립트가 그대로 동작함 |
 
 ### `Assets/SteamVR/InteractionSystem/Core/Scripts/`에서 수정한 것들
 
 | 파일 | 수정 내용 |
 |---|---|
-| `Hand.cs` | grab 판정을 FixedUpdate→Update로 이동(저프레임 대응). `SnapOnAttach` 실제 처리 로직 추가, `objectAttachmentPoint`에 직접 부모로 붙여서 잡은 뒤에도 손 모양 보정을 계속 따라가게 함. `GetTrackedObjectVelocity/AngularVelocity` 스무딩. hover 대상을 가장 가까운 것 하나로 제한(물체 여러 개가 겹쳐있을 때 하나가 안 놓아지던 문제 해결). 물체별 커스텀 Grab Threshold 지원. **`Hand Collider` 필드 추가 — `LateUpdate()`에서 매 프레임 손의 최신 위치/회전을 `HandCollider.MoveTo()`로 전달, 물체를 잡거나 놓을 때 `SetCollisionDetectionEnabled()`로 충돌 감지를 켜고 끔** (잡은 물체와 손 콜라이더가 서로 밀어내며 떨리는 것 방지) |
+| `Hand.cs` | grab 판정을 FixedUpdate→Update로 이동(저프레임 대응). `SnapOnAttach` 실제 처리 로직 추가, `objectAttachmentPoint`에 직접 부모로 붙여서 잡은 뒤에도 손 모양 보정을 계속 따라가게 함. `GetTrackedObjectVelocity/AngularVelocity` 스무딩. hover 대상을 가장 가까운 것 하나로 제한(물체 여러 개가 겹쳐있을 때 하나가 안 놓아지던 문제 해결). 물체별 커스텀 Grab Threshold 지원 (`GraspPoseTrigger`의 `Use Custom Grab Threshold`). 물리 손 콜라이더(`HandCollider`) 연동을 시도했다가 이름 충돌 버그로 되돌림 (아래 참고) |
 | `HandVisual.cs` | 장갑 3D 모델을 인스턴스화하고, 지정한 뼈(`Target Bone Name`)가 항상 RightHand 원점에 오도록 매 프레임 재정렬. `HoverPoint`/`ObjectAttachmentPoint`도 모델과의 상대 위치+회전 관계를 캡처해서 매 프레임 재현. `Visual Rotation Offset Euler`로 모델의 기본 조형 각도도 보정 가능 |
 
 ## 물리 손 콜라이더 시도와 되돌림 (`HandCollider` / `HandColliderRight.prefab`)
@@ -64,10 +64,85 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
   비활성화된 오브젝트도 찾아내므로, 완전히 씬에서 삭제해야 충돌이 사라짐. 다시 시도한다면
   관절 콜라이더 이름을 장갑 모델과 겹치지 않게(예: 접미사 추가) 짓는 게 필수
 
+## 물체를 잡아도 포즈가 안 바뀌던 문제 (실제 원인은 Animator 컨트롤러 잔재)
+
+`GraspPoseTrigger`의 `Pose State Name`을 `SphereGrab`/`pinchGrab` 등으로 바꿔도 손모양이
+계속 비슷하게만 보이는 문제가 있었음. `Animator.Play()`/`CrossFadeInFixedTime()` 호출,
+`Animator` 참조, 상태 이름 철자를 전부 로그로 찍어서 확인했으나 전부 정상이었고, 심지어
+한 프레임 더 기다려서 `IsName()`을 확인해도 계속 `False`로 나옴 — **`IsInTransition()`이
+계속 `True`로 유지되는 것으로 원인을 좁힘**.
+
+- **진짜 원인**: `vr_glove_graspPoses` 컨트롤러 안에 `Any State → 각 포즈`로 가는 자동
+  전환 화살표가 남아있었음. 예전 트리거/파라미터 방식의 잔재로, `AnimationState`라는 정수
+  파라미터 값에 따라 전환하도록 조건이 걸려있었는데, 지금 코드 어디에도 그 파라미터를
+  바꾸는 곳이 없어서 항상 초기값(0, `Reset`)에 멈춰있었음. `Has Exit Time`도 꺼져있어서
+  "지금 파라미터가 0이니 Rest로 가야 한다"는 조건이 매 프레임 참으로 평가되고, `Any State`는
+  지금 어떤 상태든 끼어들 수 있는 특수 전환이라 `Animator.Play()`로 억지로 점프시켜도
+  바로 다음 프레임에 다시 끌려가는 무한 반복이 발생하고 있었음
+- **해결**: Animator 창에서 `Any State`로부터 나가는 4개 화살표(Rest/SphereGrab/StickGrab/
+  pinchGrab으로 가는 것)를 전부 삭제. 코드 수정이 아니라 에셋(컨트롤러) 자체를 고친 것이라
+  Git에는 `.controller` 파일 변경으로 나타남
+- **디버깅 팁**: `Animator.Play()`는 같은 프레임에 즉시 반영되지 않고, `CrossFadeInFixedTime`
+  을 쓰면 `transitionDuration`만큼 더 걸림. `GetCurrentAnimatorStateInfo().IsName()`으로
+  확인할 때는 충분히 시간이 지난 뒤에 확인해야 하고, 그래도 계속 `False`면
+  `animator.IsInTransition(layer)`을 찍어서 "전환이 끝나지 않고 있는지"부터 의심할 것.
+  Animator 창을 볼 때도 Project 창에서 컨트롤러 에셋을 더블클릭하면 실시간 상태가 아니라
+  정지된 미리보기만 보이므로, 반드시 Play 모드에서 실제 오브젝트(예: `slim_r`)를
+  Hierarchy에서 선택한 채로 봐야 함
+
+## 작아진 물체가 손에 안 붙고 앞에 떠 보이는 문제
+
+`PrimitiveSizeSetter`로 물체 크기를 줄이면, 손으로 잡았을 때 물체가 손바닥에 착 붙지 않고
+원래(1배) 크기 기준으로 자리 잡은 위치에 떠 보이는 문제가 있었음. 두 가지가 겹쳐 있었음.
+
+- **정지 각도(Stop Angle)는 물체 크기와 무관하게 고정값**이라, 작아진 물체를 잡아도
+  손가락은 원래 크기 기준으로 설정된 각도까지만 굽혀짐 → 물체별로 다시 실측 필요
+- **스냅 기준점(`ObjectAttachmentPoint`)은 고정된 한 점**이라, 물체 크기나 포즈가 바뀌면
+  그 점이 실제 그립 위치와 안 맞을 수 있음 → `Throwable`의 `Attachment Offset`에 물체
+  쪽에 직접 만든 빈 오브젝트(그립 기준점 역할)를 연결하면, 물체 원점이 아니라 그 지점이
+  `ObjectAttachmentPoint`에 맞춰 스냅됨. 그립 기준점은 `Throwable`이 붙은 부모 오브젝트의
+  자식으로 만들어야 스케일 계산이 꼬이지 않음 (메시 자식에 붙이면 메시의 축소된 스케일이
+  같이 곱해져서 위치가 헷갈림)
+- 물체 크기별로 `SphereGrab`/`StickGrab`/`pinchGrab` 중 더 자연스러운 포즈가 다름 (실측상
+  큰 물체는 SphereGrab, 작은 물체는 StickGrab이 더 나았음 — pinchGrab이 항상 작은 물체에
+  최적은 아니었음)
+
+## 모터가 노이즈처럼 미세하게 계속 떨리는 문제
+
+hover/grab 상태인 동안 `SerialGloveReceiver`가 매 프레임(초당 수십 번) 완전히 똑같은
+햅틱 명령을 아두이노로 계속 반복 전송하고 있었음. 값이 그대로인데도 시리얼 라인이 쉴 새
+없이 몰리면서, 아주 가끔 한 줄이 중간에 끊기거나 겹쳐 아두이노가 순간적으로 잘못된 값을
+읽는 것으로 추정됨 (직접 아두이노 앱으로 한 번만 명령을 보내면 안 떨리는 것으로 비교
+확인). 마지막으로 보낸 값과 실제로 달라졌을 때만 전송하도록 수정해서 해결.
+
+## ZIG SIM 휴대폰 리모컨 연동
+
+오른손에 장갑을 착용한 상태에서는 왼손으로 WASD 키보드 조작이 불가능해, 휴대폰을 리모컨
+삼아 시점을 조작하도록 `ZigSimConnectionTest.cs`를 추가함. ZIG SIM 앱이 OSC 패킷을
+UDP로 보내고, Unity가 `UdpClient`로 직접 파싱함(별도 OSC 라이브러리 없이 바이트 단위로
+파싱).
+
+- **방화벽 문제**: 같은 PC인데도 처음 테스트에선 패킷이 전혀 안 들어오는 경우가 있었음.
+  Windows 방화벽의 "앱 허용" 목록에서 Unity Editor를 체크해도 안 되는 경우가 있는데,
+  이는 처음 실행 시 "네트워크 접근 허용" 알림을 실수로 취소하면 그 네트워크 프로필(개인/
+  공용)에 대해 **차단 규칙**이 별도로 생기기 때문임. 차단 규칙이 허용 체크보다 우선이라,
+  앱 허용 목록에서 체크해도 소용없음. 고급 보안 방화벽의 인바운드 규칙에서 `Unity`로
+  검색해 차단 규칙을 찾아 허용으로 바꾸거나 삭제해야 함. 포트 단위로 허용 규칙
+  (`netsh advfirewall firewall add rule name="ZIGSIM UDP 9001" dir=in action=allow
+  protocol=UDP localport=9001 profile=any`)을 새로 만드는 것도 확실한 대안
+- **수신 디버그**: 받은 패킷 수, 마지막으로 보낸 쪽의 IP, 회전/터치 인식 횟수, 마지막
+  파싱 오류를 화면에 표시하는 디버그를 추가해서, "신호가 아예 안 오는지" vs "오는데
+  형식이 안 맞는지"를 구분할 수 있게 함
+- **예외 처리 버그**: 원래 수신 루프(`ReceiveLoop`)가 파싱 중 예상 못 한 예외가 한 번만
+  나도 `break`로 영구 종료되는 구조였음 — 예외를 기록만 하고 루프를 계속 돌도록 수정
+- **축 반전/감도**: 피치·요·롤 각각 반전 여부와 감도(배율)를 Inspector에서 조절 가능.
+  롤은 기본으로 반전되어 있음(실측 결과)
+- **폰 연결이 끊겼을 때의 한계**: 마지막으로 받은 회전값에 카메라가 고정된 채로 멈춤 —
+  시연 중 연결이 끊기면 자동으로 키보드/마우스 조작으로 복귀하지는 않음 (추후 개선 여지)
+
 ## 개인별로 맞춰야 하는 값 (Inspector에서, 커밋 전에 되돌리기)
 
 - `SerialGloveReceiver` → `Port Name`: 본인 PC의 COM 포트 번호로
-- `ArucoHandTracker` → `Preferred Camera Name`: 사용할 웹캠 이름 (여러 대 연결 시)
 - `ArucoHandTracker` → `Fx`/`Fy`/`Distance Scale Correction`: 웹캠마다 다름, 실측 거리로 보정
 - `ArucoHandTracker` → `Invert Depth`/`Depth Reference Meters`: 거리-깊이 반전 사용 여부와 기준 거리
 - `ArucoHandTracker` → `Marker Switch Threshold Ratio`: 마커 여러 개 동시 인식 시 전환 민감도 (기본 1.3)
@@ -78,9 +153,13 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
 - `HandVisual` → `Target Bone Name`/`Additional Offset`/`Visual Rotation Offset Euler`: 마커 부착 위치, 모델 기본 각도에 맞춰서 (현재 회전 오프셋: `X:0, Y:-45, Z:90`)
 - `HandVisual` → `Hover Point To Align`/`Attachment Point To Align`: `HoverPoint`/`ObjectAttachmentPoint` 연결 필요
 - `Hand` → `Hover Radius`: 손이 물체와 얼마나 가까워야 반응할지
+- `GraspPoseTrigger` → 손가락별 `Stop Angle`(0~180도): 아두이노 프로토콜/서보 반전 설정이 바뀔 때마다, 물체 크기가 바뀔 때마다 실측 재조정 필요
+- `GraspPoseTrigger` → `Pose State Name`: 물체 크기에 맞는 포즈 선택 (큰 물체 SphereGrab, 작은 물체 StickGrab이 실측상 나았음)
+- `Throwable` → `Attachment Offset`: 물체 원점이 아니라 별도 그립 기준점에 맞춰 스냅하고 싶을 때 연결
+- `Throwable` → `Release Velocity Style`: 던지지 않고 잡기만 한다면 `No Change` 권장(놓는 순간 속도 노이즈로 인한 오동작 방지)
 - `ResetObjectsOnKeyPress` → `Reset Key`: 물체 리셋 키 변경 가능 (기본 Backspace)
-- `GraspPoseTrigger` → 손가락별 `Stop Angle`(0~180도): 아두이노 프로토콜/서보 반전 설정이 바뀔 때마다 실측 재조정 필요
-- `QuitOnKeyPress` → `Quit Key`: 원하는 종료 키로 변경 가능 (기본 Esc)
+- `QuitOnKeyPress` → `Quit Key`: 종료 키 변경 가능 (기본 Esc)
+- `ZigSimConnectionTest` → `Invert Pitch/Yaw/Roll`, `Pitch/Yaw/Roll Sensitivity`: 폰 방향에 따라 조정
 - `PrimitiveSizeSetter`(Cube/Sphere) → `Size In Meters`: 원하는 물체 크기로 조정
 
 ## 알려진 이슈 / 설계 결정 기록
@@ -89,7 +168,7 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
 - **마커 기반 IMU 드리프트 자동 보정은 시도했다가 되돌림**: 마커 회전을 절대 기준 삼아 IMU 요(yaw)
   드리프트를 실시간 보정하는 기능을 구현했었으나, 마커/IMU 각각의 축 정의가 서로 다른 경로로
   틀어져 있어 축 보정 조합을 찾기가 지나치게 어려웠음. 실익 대비 튜닝 난이도가 너무 높아 제거하고
-  순수 IMU 방식으로 복귀. 손등에 마커 3개를 붙이며 생긴 "동시 인식" 문제만 별도로 해결함
+  순수 IMU 방식으로 복귀
 - **손등 마커 3개가 한 앵글에 동시에 잡히는 문제**: 매 프레임 "제일 크게 보이는 마커"만 단순
   비교하면, 크기가 엇비슷할 때 프레임마다 다른 마커로 전환되면서 위치가 튀는 문제가 있었음.
   ① 지금 추적 중인 마커보다 확실히(기본 30% 이상) 커야만 전환하는 히스테리시스, ② 마커별
@@ -100,6 +179,10 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
   이 과정에서 서보 반전 설정(`servoReverse`)도 전 손가락 켜지는 쪽으로 바뀌어서, 예전에
   실측해둔 각도값이 지금도 같은 물리적 결과를 낼지 보장할 수 없음 — 프로토콜이나 서보 반전
   설정이 바뀔 때마다 손으로 다시 확인 필요
+- **`Throwable`의 `Velocity Movement` 플래그는 코드 구현이 없음**: 원본 SteamVR에서는 손의
+  자식으로 안 붙이고 속도로 따라오게 하는 방식이었으나, 이 프로젝트의 `Hand.cs`에는 그 로직이
+  없어서 체크해도 아무 효과가 없음(물체가 손을 안 따라옴). `Parent To Hand` + `Snap On Attach`
+  + `Turn On Kinematic` 조합만 실제로 동작함
 - **웹캠 60fps 확보**: `ReadPixels`(동기) 대신 `AsyncGPUReadback`(비동기) 사용 — 직접 `ReadPixels`로 되돌리면 fps가 다시 떨어짐
 - **`GraspPoseTrigger`를 물체에 붙일 때 `[RequireComponent(typeof(Interactable))]`를 쓰면 안 됨** —
   이 씬은 `Interactable`이 보통 부모 오브젝트(`Throwable (...)`)에 있고 자식(Cube 등)에는 없는 구조가 흔함.
@@ -123,7 +206,17 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
 - **`Assets/SteamVR/...`는 `Assets/Scripts/`와 별도의 컴파일 단위(어셈블리)로 나뉘어 있음** —
   `Assets/Scripts/`에 있는 클래스를 `Assets/SteamVR/...` 쪽 스크립트에서 참조하면
   `CS0246` 에러가 남. 지금은 `Hand.cs`가 `GraspPoseTrigger`를 참조하고 있어서,
-  `GraspPoseTrigger.cs`를 양쪽 폴더에 동일한 내용으로 넣어야 함
+  `GraspPoseTrigger.cs`를 양쪽 폴더에 동일한 내용으로 넣어야 함. **파일 내용을 똑같이
+  맞추는 것만으론 부족하고, 오브젝트에 두 스크립트를 컴포넌트로 모두 붙여야 함** — 하나만
+  붙어있으면 다른 쪽 어셈블리 코드에서는 항상 null로 보임 (예: `Custom Grab Threshold`가
+  전혀 반영 안 되던 문제의 원인이었음). Inspector 컴포넌트 헤더 우클릭 → `Edit Script`로
+  지금 어느 파일이 실제로 붙어있는지 확인 가능
+- **웹캠 요청 해상도 960이 자동으로 720으로 낮아지던 문제**: `ArucoHandTracker`가
+  1280x960@60fps를 요청했는데, 960이라는 세로 해상도가 이 카메라의 표준 지원 해상도가
+  아니라서 드라이버가 제일 가까운 720으로 대신 내려버렸던 것. 카메라가 실제로 1920x1080@60fps를
+  지원하는 것을 Windows 카메라 설정에서 확인했으나, 막상 1920x1080으로 올려보니 이 프로젝트
+  기준으로는 부하가 커서 프레임이 떨어져 다시 1280x960으로 되돌림 — 해상도를 바꿀 때는 성능
+  저하 여부를 실제로 확인 후 결정할 것
 - **Unity 6 + OpenCvSharp에서 API 이름이 계속 다름**: `PredefinedDictionaryType`, `DetectorParameters`,
   `SolvePnPMethod.IPPE_SQUARE` 등 확실하지 않으면 IDE 자동완성으로 확인하는 게 제일 빠름
 - **`SerialPort.ReadExisting()`이 Unity(Mono)에서 가끔 에러를 던지는 알려진 버그** — `BytesToRead` +
@@ -136,23 +229,3 @@ Hand) 시스템을 가져와 통합을 시도했으나, **아래 이름 충돌 �
   맞춰 축소 렌더링되는 미리보기이고, 빌드본이 실제 해상도로 렌더링하는 최종 결과물임
 - **빌드본엔 에디터의 정지(Pause)/정지(Stop) 버튼이 없음**: 개발용 도구라 빌드에는 포함
   안 됨. `QuitOnKeyPress.cs`로 별도 종료 키(Esc)를 만들어서 대응함
-- **모터가 노이즈처럼 미세하게 계속 떨리는 문제**: hover/grab 상태인 동안 `SerialGloveReceiver`가
-  매 프레임(초당 수십 번) 완전히 똑같은 햅틱 명령을 아두이노로 계속 반복 전송하고 있었음.
-  값이 그대로인데도 시리얼 라인이 쉴 새 없이 몰리면서, 아주 가끔 한 줄이 중간에 끊기거나
-  겹쳐 아두이노가 순간적으로 잘못된 값을 읽는 것으로 추정됨 (직접 아두이노 앱으로 한 번만
-  명령을 보내면 안 떨리는 것으로 비교 확인). 마지막으로 보낸 값과 실제로 달라졌을 때만
-  전송하도록 수정해서 해결
-- **`Assets/Scripts/`와 `Assets/SteamVR/.../Scripts/`에 있는 두 `GraspPoseTrigger.cs`가
-  서로 다른 상태로 벌어지는 문제**: 물체별 `Custom Grab Threshold`가 극단적인 값(0.05)을
-  넣어도 전혀 반영이 안 되는 증상이 있었음. 원인은 두 폴더가 서로 다른 컴파일 단위라, 오브젝트에
-  실제로 붙어있는 컴포넌트가 어느 한쪽 코드만 최신 상태였고 다른 한쪽(예: `Hand.cs`가 참조하는
-  쪽)은 예전 버전이라 새 필드 자체가 없었던 것. 파일 내용을 똑같이 맞추는 것만으론 부족하고,
-  **두 스크립트를 실제로 오브젝트에 모두 컴포넌트로 붙여야** 함(하나만 붙어있으면 다른 한쪽
-  어셈블리 코드에서는 항상 null로 보임) — Inspector 컴포넌트 헤더 우클릭 → `Edit Script`로
-  지금 어느 파일이 실제로 붙어있는지 확인 가능
-- **웹캠 요청 해상도 960이 자동으로 720으로 낮아지던 문제**: `ArucoHandTracker`가
-  1280x960@60fps를 요청했는데, 960이라는 세로 해상도가 이 카메라의 표준 지원 해상도가
-  아니라서 드라이버가 제일 가까운 720으로 대신 내려버렸던 것. 카메라가 실제로 1920x1080@60fps를
-  지원하는 것을 Windows 카메라 설정에서 확인했으나, 막상 1920x1080으로 올려보니 이 프로젝트
-  기준으로는 부하가 커서 프레임이 떨어져 다시 1280x960으로 되돌림 — 해상도를 바꿀 때는 성능
-  저하 여부를 실제로 확인 후 결정할 것

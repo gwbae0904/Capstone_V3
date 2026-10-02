@@ -47,6 +47,13 @@
 //   Hand의 전역 Grab Threshold 대신 물체별로 재정의할 수 있게 함.
 //   Use Custom Grab Threshold 체크박스로 켜고 끄는 방식 (처음엔 -1을
 //   "설정 안 함"으로 쓰는 방식이었는데, 체크박스가 훨씬 명확해서 이렇게 변경)
+// - [스크립트 문제 아니었음] pinchGrab 등으로 바꿔도 포즈가 안 바뀌는 것처럼 보였던
+//   문제의 진짜 원인은 vr_glove_graspPoses 컨트롤러 안에 남아있던 Any State -> 각 포즈
+//   자동 전환이었음 (예전 트리거/파라미터 방식의 잔재, AnimationState라는 정수 파라미터
+//   값으로 조건이 걸려있었는데 아무 코드도 그 파라미터를 안 바꿔서 항상 조건이 참으로
+//   평가되어, Animator.Play()로 점프시켜도 바로 다음 프레임에 다시 끌려가고 있었음).
+//   Any State에서 나가는 그 4개 화살표를 Animator 창에서 직접 삭제해서 해결함 - 코드
+//   수정 사항 아님, 기록만 남겨둠.
 
 using UnityEngine;
 using Valve.VR.InteractionSystem;
